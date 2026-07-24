@@ -20,7 +20,7 @@ load_dotenv()  # must run before any module reads os.environ
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 
-from .routers import auth, budgets, profile, savings, subscriptions, transactions  # noqa: E402
+from .routers import auth, budgets, profile, receipts, savings, subscriptions, transactions  # noqa: E402
 
 app = FastAPI(title="Finance App API", version="1.0.0")
 
@@ -47,6 +47,7 @@ app.include_router(profile.router, prefix="/api")
 app.include_router(budgets.router, prefix="/api")
 app.include_router(savings.router, prefix="/api")
 app.include_router(subscriptions.router, prefix="/api")
+app.include_router(receipts.router, prefix="/api")
 # app.include_router(insights.router, prefix="/api")
 
 
