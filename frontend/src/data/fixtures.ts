@@ -1,0 +1,16 @@
+import type { Transaction } from "../types";
+
+// Matches supabase/schema.sql's transactions table. Used until Person A's
+// /api/transactions endpoint lands - swap transactionsApi.ts over then.
+export const fixtureTransactions: Transaction[] = [
+  { id: "1", transaction_date: "2026-07-24", merchant: "NTUC Fairprice", amount: 45.2, category: "Groceries", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+  { id: "2", transaction_date: "2026-07-23", merchant: "Employer Payroll", amount: 3200.0, category: "Income", transaction_type: "income", currency: "SGD", notes: "", source: "manual" },
+  { id: "3", transaction_date: "2026-07-22", merchant: "Grab", amount: 18.5, category: "Transport", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+  { id: "4", transaction_date: "2026-07-20", merchant: "Netflix", amount: 14.9, category: "Subscriptions", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+  { id: "5", transaction_date: "2026-07-18", merchant: "NTUC Fairprice", amount: 62.1, category: "Groceries", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+  { id: "6", transaction_date: "2026-07-15", merchant: "Grab", amount: 22.3, category: "Transport", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+  { id: "7", transaction_date: "2026-07-10", merchant: "Cold Storage", amount: 38.75, category: "Groceries", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+  { id: "8", transaction_date: "2026-06-24", merchant: "Employer Payroll", amount: 3100.0, category: "Income", transaction_type: "income", currency: "SGD", notes: "", source: "manual" },
+  { id: "9", transaction_date: "2026-06-20", merchant: "NTUC Fairprice", amount: 40.0, category: "Groceries", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+  { id: "10", transaction_date: "2026-06-12", merchant: "Grab", amount: 15.0, category: "Transport", transaction_type: "expense", currency: "SGD", notes: "", source: "manual" },
+];

@@ -37,3 +37,21 @@ export interface ReceiptExtraction {
   confidence: number;
   notes: string;
 }
+
+export interface Transaction {
+  id: string;
+  merchant: string;
+  amount: number;
+  category: string;
+  transaction_type: "income" | "expense";
+  transaction_date: string;
+  currency: string;
+  notes: string;
+  source: "manual" | "csv" | "receipt";
+}
+
+export interface Insight {
+  type: string;
+  severity: "warning" | "info" | "positive";
+  message: string;
+}
