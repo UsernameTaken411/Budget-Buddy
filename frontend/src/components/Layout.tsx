@@ -1,11 +1,13 @@
-import { Cloud, Landmark, PiggyBank, Receipt, Sparkles, WalletCards, WifiOff } from "lucide-react";
+import { Cloud, LayoutDashboard, Landmark, MessageCircle, PiggyBank, Receipt, Sparkles, WalletCards, WifiOff } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { isPreviewMode } from "../services/api";
 
 const links = [
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/budgets", label: "Budgets", icon: WalletCards },
   { to: "/savings", label: "Savings", icon: PiggyBank },
   { to: "/subscriptions", label: "Subscriptions", icon: Receipt },
+  { to: "/ai", label: "Ask AI", icon: MessageCircle },
 ];
 
 export function Layout() {
