@@ -1,17 +1,18 @@
-import { Cloud, Landmark, PiggyBank, Sparkles, WalletCards, WifiOff } from "lucide-react";
+import { Cloud, Landmark, PiggyBank, Receipt, Sparkles, WalletCards, WifiOff } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { isPreviewMode } from "../services/api";
 
 const links = [
   { to: "/budgets", label: "Budgets", icon: WalletCards },
   { to: "/savings", label: "Savings", icon: PiggyBank },
+  { to: "/subscriptions", label: "Subscriptions", icon: Receipt },
 ];
 
 export function Layout() {
   const preview = isPreviewMode();
   return (
     <div className="min-h-screen bg-[#090d0c] text-slate-100">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(52,211,153,.11),transparent_32%)]" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(52,211,153,.11),transparent_32%),radial-gradient(circle_at_100%_40%,rgba(34,197,94,.05),transparent_28%)]" />
       <header className="relative z-30 border-b border-white/[0.07] bg-[#090d0c]/90 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-between px-5 py-4"><div className="flex items-center gap-3"><span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-400 text-[#07100d]"><Landmark size={19} /></span><p className="display font-extrabold">Budget Buddy</p></div><Status preview={preview} /></div>
       </header>
@@ -19,7 +20,7 @@ export function Layout() {
         <div className="flex items-center gap-3 px-2 py-3"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-emerald-400 text-[#07100d]"><Landmark /></span><div><p className="display font-extrabold">Budget Buddy</p><p className="text-xs text-slate-500">Financial clarity, daily.</p></div></div>
         <p className="mb-2 mt-9 px-3 text-[10px] font-bold uppercase tracking-[.22em] text-slate-600">Plan & grow</p>
         <nav className="space-y-1">{links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${isActive ? "bg-emerald-400/10 text-emerald-300" : "text-slate-500 hover:bg-white/[0.04] hover:text-slate-200"}`}><Icon size={17} />{label}</NavLink>)}</nav>
-        <div className="mt-auto rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-4"><Sparkles className="mb-3 text-emerald-300" size={18} /><p className="text-sm font-bold">Money, without the mystery.</p><p className="mt-1 text-xs leading-5 text-slate-500">Set limits and fund goals in one place.</p></div>
+        <div className="mt-auto rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.04] p-4"><Sparkles className="mb-3 text-emerald-300" size={18} /><p className="text-sm font-bold">Money, without the mystery.</p><p className="mt-1 text-xs leading-5 text-slate-500">Set limits, fund goals and catch recurring costs.</p></div>
         <div className="mt-4"><Status preview={preview} /></div>
       </aside>
       <main className="relative z-10 mx-auto max-w-6xl px-5 pb-28 pt-8 lg:ml-64 lg:px-10 lg:pb-12 lg:pt-10"><Outlet /></main>
