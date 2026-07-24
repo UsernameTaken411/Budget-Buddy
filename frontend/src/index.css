@@ -1,5 +1,16 @@
 @import "tailwindcss";
 
+/* Tells the browser to render native form popups (select dropdowns, date
+   pickers) using its dark UI variant instead of the default light one. The
+   <select> elements themselves are already styled dark via Tailwind, but
+   without this the *dropdown list* the browser opens on click ignores that
+   styling and renders as a plain white box — this fixes it in one place
+   instead of trying to style every <option> individually (which browsers
+   only partially respect anyway). */
+:root {
+  color-scheme: dark;
+}
+
 /* Native number-input spinner arrows render as a light OS-styled box that
    clashes with the dark theme — hide them everywhere. */
 input[type="number"]::-webkit-outer-spin-button,
