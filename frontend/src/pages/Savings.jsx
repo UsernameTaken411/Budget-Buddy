@@ -220,25 +220,32 @@ export default function Savings() {
                   {g.progress_percent}%
                 </span>
               </div>
-              <div className="mt-3 flex gap-2">
-                <input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
-                  placeholder="Add contribution"
-                  value={contribution[g.id] ?? ""}
-                  onChange={(e) =>
-                    setContribution((c) => ({ ...c, [g.id]: e.target.value }))
-                  }
-                  className="w-40 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white placeholder:text-neutral-600"
-                />
-                <button
-                  onClick={() => handleContribute(g.id)}
-                  className="rounded-xl border border-white/10 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
-                >
-                  Contribute
-                </button>
-              </div>
+              {reached ? (
+                <p className="mt-3 text-xs text-neutral-500">
+                  This goal is fully funded — contributions are closed. Remove it or raise the
+                  target to keep adding.
+                </p>
+              ) : (
+                <div className="mt-3 flex gap-2">
+                  <input
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Add contribution"
+                    value={contribution[g.id] ?? ""}
+                    onChange={(e) =>
+                      setContribution((c) => ({ ...c, [g.id]: e.target.value }))
+                    }
+                    className="w-40 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white placeholder:text-neutral-600"
+                  />
+                  <button
+                    onClick={() => handleContribute(g.id)}
+                    className="rounded-xl border border-white/10 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
+                  >
+                    Contribute
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
