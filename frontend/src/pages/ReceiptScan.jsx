@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch, ApiError } from "../services/api";
 import { CATEGORIES, CATEGORY_LABELS, formatAmount } from "../services/categories";
 
@@ -7,19 +7,84 @@ const RECEIPT_CATEGORIES = CATEGORIES.filter((c) => c !== "income" && c !== "tra
 
 export default function ReceiptScan() {
   const inputRef = useRef(null);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
   const [result, setResult] = useState(null);
   const [status, setStatus] = useState("idle"); // idle | scanning | review | saving | saved
   const [error, setError] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
 
-  function selectImage(e) {
-    const selected = e.target.files?.[0] ?? null;
-    setFile(selected);
+  // Always release the webcam if the user navigates away mid-capture.
+  useEffect(() => stopCamera, []);
+
+  function applyImage(fileOrBlob) {
+    setFile(fileOrBlob);
     setResult(null);
     setStatus("idle");
     setError("");
-    setPreview(selected ? URL.createObjectURL(selected) : "");
+    setPreview(fileOrBlob ? URL.createObjectURL(fileOrBlob) : "");
+  }
+
+  function selectImage(e) {
+    applyImage(e.target.files?.[0] ?? null);
+  }
+
+  function stopCamera() {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    setCameraOpen(false);
+  }
+
+  async function openCamera() {
+    setError("");
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+        audio: false,
+      });
+      streamRef.current = stream;
+      setCameraOpen(true);
+      // videoRef isn't mounted until cameraOpen renders it — attach next tick.
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+      }, 0);
+    } catch (err) {
+      setError(
+        err.name === "NotAllowedError"
+          ? "Camera access was blocked. Allow camera permission for this site and try again."
+          : "Couldn't access a camera on this device."
+      );
+    }
+  }
+
+  function capturePhoto() {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    if (!video || !canvas || !video.videoWidth) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) return;
+        const captured = new File([blob], `receipt-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        });
+        applyImage(captured);
+        stopCamera();
+      },
+      "image/jpeg",
+      0.92
+    );
   }
 
   async function scan() {
@@ -61,11 +126,8 @@ export default function ReceiptScan() {
   }
 
   function reset() {
-    setFile(null);
-    setPreview("");
-    setResult(null);
-    setStatus("idle");
-    setError("");
+    stopCamera();
+    applyImage(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -98,14 +160,55 @@ export default function ReceiptScan() {
       ) : (
         <>
           <div className="rounded-xl border border-slate-200 bg-white p-4">
-            <input
-              ref={inputRef}
-              type="file"
-              accept={ALLOWED_TYPES.join(",")}
-              capture="environment"
-              onChange={selectImage}
-              className="text-sm"
-            />
+            {cameraOpen ? (
+              <div className="flex flex-col gap-3">
+                <video
+                  ref={videoRef}
+                  playsInline
+                  muted
+                  className="w-full rounded-lg border border-slate-200 bg-black"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={stopCamera}
+                    className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={capturePhoto}
+                    className="flex-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                  >
+                    Capture photo
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={openCamera}
+                  className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white"
+                >
+                  Use camera
+                </button>
+                <span className="text-xs text-slate-400">or</span>
+                <input
+                  ref={inputRef}
+                  type="file"
+                  accept={ALLOWED_TYPES.join(",")}
+                  capture="environment"
+                  onChange={selectImage}
+                  className="text-sm"
+                />
+              </div>
+            )}
+
+            {/* Off-screen canvas used only to freeze a frame from the live video. */}
+            <canvas ref={canvasRef} className="hidden" />
+
             {preview && (
               <img
                 src={preview}
