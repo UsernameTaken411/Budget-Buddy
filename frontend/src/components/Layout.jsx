@@ -6,7 +6,8 @@ import { useAuth } from "../services/auth.jsx";
 const LINKS = [
   { to: "/transactions", label: "Transactions" },
   // { to: "/budgets", label: "Budgets" },      B
-  // { to: "/dashboard", label: "Dashboard" },  C
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/chat", label: "Ask AI" },
   { to: "/profile", label: "Profile" },
 ];
 
