@@ -1,6 +1,5 @@
-import { Bot, Camera, CircleUserRound, Cloud, LayoutDashboard, Landmark, List, PiggyBank, Receipt, Sparkles, WalletCards, WifiOff } from "lucide-react";
+import { Bot, Camera, CircleUserRound, Cloud, LayoutDashboard, Landmark, List, PiggyBank, Receipt, Sparkles, WalletCards } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
-import { isPreviewMode } from "../services/api";
 
 const links = [
   { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
@@ -14,7 +13,6 @@ const links = [
 ];
 
 export function Layout() {
-  const preview = isPreviewMode();
   return (
     <div className="min-h-screen bg-[#090d0c] text-slate-100">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(52,211,153,.11),transparent_32%),radial-gradient(circle_at_100%_40%,rgba(34,197,94,.05),transparent_28%)]" />
@@ -24,7 +22,7 @@ export function Layout() {
             <span className="grid h-9 w-9 place-items-center rounded-xl bg-emerald-400 text-[#07100d]"><Landmark size={19} /></span>
             <p className="display font-extrabold">Budget Buddy</p>
           </div>
-          <Status preview={preview} />
+          <Status />
         </div>
       </header>
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-white/[0.07] bg-[#0b100f]/95 p-5 backdrop-blur-xl lg:flex">
@@ -45,7 +43,7 @@ export function Layout() {
           <p className="text-sm font-bold">Money, without the mystery.</p>
           <p className="mt-1 text-xs leading-5 text-slate-500">Set limits, fund goals and catch recurring costs in one place.</p>
         </div>
-        <div className="mt-4"><Status preview={preview} /></div>
+        <div className="mt-4"><Status /></div>
       </aside>
       <main className="relative z-10 mx-auto max-w-6xl px-5 pb-28 pt-8 lg:ml-64 lg:px-10 lg:pb-12 lg:pt-10"><Outlet /></main>
       <nav className="fixed inset-x-3 bottom-3 z-40 flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-[#111715]/95 p-2 shadow-2xl backdrop-blur-xl lg:hidden">
@@ -55,6 +53,6 @@ export function Layout() {
   );
 }
 
-function Status({ preview }: { preview: boolean }) {
-  return <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-bold ${preview ? "border-amber-300/15 bg-amber-300/[0.06] text-amber-200" : "border-emerald-300/15 bg-emerald-300/[0.06] text-emerald-300"}`}>{preview ? <WifiOff size={13} /> : <Cloud size={13} />}{preview ? "Local preview" : "Cloud synced"}</div>;
+function Status() {
+  return <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.06] px-3 py-1.5 text-[11px] font-bold text-emerald-300"><Cloud size={13} />Supabase synced</div>;
 }

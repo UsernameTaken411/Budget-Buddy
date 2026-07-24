@@ -1,5 +1,4 @@
 import { FormEvent, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { auth } from "../services/auth";
 
 export function AuthPage() {
@@ -7,13 +6,12 @@ export function AuthPage() {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
   async function submit(event: FormEvent) {
     event.preventDefault(); setError(""); setLoading(true);
     try {
       if (signup) await auth.signup(form.email, form.password, form.name);
       else await auth.login(form.email, form.password);
-      navigate("/dashboard"); window.location.reload();
+      window.location.assign("/dashboard");
     } catch (reason) { setError(reason instanceof Error ? reason.message : "Could not sign in."); }
     finally { setLoading(false); }
   }

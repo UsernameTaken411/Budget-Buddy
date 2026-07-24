@@ -1,217 +1,73 @@
-const API_URL =
-  import.meta.env.VITE_API_URL ??
-  `http://${window.location.hostname}:8001/api`;
+const API_URL = import.meta.env.VITE_API_URL ?? `http://${window.location.hostname}:8001/api`;
+const ACCESS_KEY = "budget_buddy_access_token";
+const REFRESH_KEY = "budget_buddy_refresh_token";
 
-export class ApiError extends Error {}
-
-const demoSeed = {
-  transactions: [
-    { id: "demo-tx-1", merchant: "Salary", amount: 4200, transaction_date: nextDate(-12), category: "Income", transaction_type: "income", currency: "SGD", source: "manual" },
-    { id: "demo-tx-2", merchant: "FairPrice Finest", amount: 68.45, transaction_date: nextDate(-2), category: "Groceries", transaction_type: "expense", currency: "SGD", source: "receipt" },
-    { id: "demo-tx-3", merchant: "KFC", amount: 14.9, transaction_date: nextDate(-1), category: "Dining", transaction_type: "expense", currency: "SGD", source: "receipt" },
-  ],
-  budgets: [
-    { id: "demo-budget-1", category: "Dining", amount: 450, spent: 318.4, remaining: 131.6, period: "monthly" },
-    { id: "demo-budget-2", category: "Transport", amount: 220, spent: 96.8, remaining: 123.2, period: "monthly" },
-    { id: "demo-budget-3", category: "Shopping", amount: 300, spent: 327.2, remaining: 0, period: "monthly" },
-  ],
-  savings: [
-    { id: "demo-goal-1", name: "Emergency fund", target_amount: 10000, current_amount: 6400, target_date: "2026-12-31", progress_percent: 64 },
-    { id: "demo-goal-2", name: "Japan trip", target_amount: 3500, current_amount: 1120, target_date: "2027-03-15", progress_percent: 32 },
-  ],
-  subscriptions: [
-    { id: "demo-sub-1", name: "Spotify", amount: 11.98, monthly_cost: 11.98, billing_cycle: "monthly", next_billing_date: nextDate(2), category: "Music", reminder_days_before: 3, is_active: true },
-    { id: "demo-sub-2", name: "Netflix", amount: 25.98, monthly_cost: 25.98, billing_cycle: "monthly", next_billing_date: nextDate(9), category: "Entertainment", reminder_days_before: 3, is_active: true },
-  ],
-};
-
-function nextDate(days: number) {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return date.toISOString().slice(0, 10);
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status = 0) {
+    super(message);
+    this.status = status;
+  }
 }
 
-function demoData<T>(path: string, options: RequestInit): T {
-  const method = options.method ?? "GET";
-  if (path === "/insights/ask") {
-    throw new ApiError("Sign in to use Azure AI financial analysis.");
-  }
-  if (path.startsWith("/transactions")) {
-    const records = readDemo("transactions");
-    const id = path.split("/")[2];
-    const payload = options.body && typeof options.body === "string" ? JSON.parse(options.body) : {};
-    if (method === "GET") return records as T;
-    if (method === "DELETE") { writeDemo("transactions", records.filter((item: { id: string }) => item.id !== id)); return undefined as T; }
-    if (method === "POST") {
-      const item = { ...payload, id: crypto.randomUUID(), source: payload.source ?? "manual" };
-      records.unshift(item); writeDemo("transactions", records); return item as T;
-    }
-  }
-  if (path === "/receipts" && (options.method ?? "GET") === "GET") {
-    return JSON.parse(
-      localStorage.getItem("budget_buddy_demo_transactions") ?? "[]",
-    ) as T;
-  }
-  if (path === "/receipts/confirm") {
-    const payload = options.body ? JSON.parse(String(options.body)) : {};
-    const storageKey = "budget_buddy_demo_transactions";
-    const records = JSON.parse(localStorage.getItem(storageKey) ?? "[]");
-    const transaction = { ...payload, id: crypto.randomUUID(), source: "receipt" };
-    records.unshift(transaction);
-    localStorage.setItem(storageKey, JSON.stringify(records));
-
-    const budgetStorageKey = "budget_buddy_demo_budgets";
-    const budgets = JSON.parse(
-      localStorage.getItem(budgetStorageKey) ?? JSON.stringify(demoSeed.budgets),
-    );
-    const categoryAliases: Record<string, string[]> = {
-      Food: ["Food", "Dining"],
-      Groceries: ["Groceries", "Food", "Dining"],
-      Transport: ["Transport"],
-      Shopping: ["Shopping"],
-      Entertainment: ["Entertainment"],
-      Health: ["Health"],
-      Utilities: ["Utilities"],
-      Travel: ["Travel"],
-      Education: ["Education"],
-      Other: ["Other", "Shopping"],
-    };
-    const acceptedNames = categoryAliases[payload.category] ?? [payload.category];
-    const matchingBudget = budgets.find((budget: { category: string }) =>
-      acceptedNames.some(
-        category => category.toLowerCase() === budget.category.toLowerCase(),
-      ),
-    );
-    if (matchingBudget) {
-      matchingBudget.spent = Number(matchingBudget.spent) + Number(payload.amount);
-      matchingBudget.remaining = Math.max(
-        Number(matchingBudget.amount) - matchingBudget.spent,
-        0,
-      );
-      localStorage.setItem(budgetStorageKey, JSON.stringify(budgets));
-    }
-    return transaction as T;
-  }
-  const domain = path.startsWith("/budgets")
-    ? "budgets"
-    : path.startsWith("/savings-goals")
-      ? "savings"
-      : "subscriptions";
-  const storageKey = `budget_buddy_demo_${domain}`;
-  const records = JSON.parse(localStorage.getItem(storageKey) ?? JSON.stringify(demoSeed[domain]));
-  const id = path.split("/")[2];
-  const payload = options.body ? JSON.parse(String(options.body)) : {};
-
-  if (method === "GET") return records as T;
-  if (method === "DELETE") {
-    localStorage.setItem(storageKey, JSON.stringify(records.filter((item: { id: string }) => item.id !== id)));
-    return undefined as T;
-  }
-  if (method === "POST" && path.endsWith("/contributions")) {
-    const goal = records.find((item: { id: string }) => item.id === id);
-    goal.current_amount = Number(goal.current_amount) + Number(payload.amount);
-    goal.progress_percent = Math.min((goal.current_amount / goal.target_amount) * 100, 100);
-    localStorage.setItem(storageKey, JSON.stringify(records));
-    return goal as T;
-  }
-  if (method === "POST") {
-    const item = {
-      ...payload,
-      id: crypto.randomUUID(),
-      ...(domain === "budgets" ? { spent: 0, remaining: payload.amount, period: "monthly" } : {}),
-      ...(domain === "savings" ? { current_amount: payload.current_amount ?? 0, progress_percent: ((payload.current_amount ?? 0) / payload.target_amount) * 100 } : {}),
-      ...(domain === "subscriptions" ? { monthly_cost: monthlyCost(payload.amount, payload.billing_cycle), is_active: true } : {}),
-    };
-    records.unshift(item);
-    localStorage.setItem(storageKey, JSON.stringify(records));
-    return item as T;
-  }
-  if (method === "PATCH") {
-    const index = records.findIndex((item: { id: string }) => item.id === id);
-    records[index] = { ...records[index], ...payload };
-    localStorage.setItem(storageKey, JSON.stringify(records));
-    return records[index] as T;
-  }
-  return undefined as T;
+function clearSession() {
+  localStorage.removeItem(ACCESS_KEY);
+  localStorage.removeItem(REFRESH_KEY);
 }
 
-function readDemo(domain: keyof typeof demoSeed) {
-  return JSON.parse(localStorage.getItem(`budget_buddy_demo_${domain}`) ?? JSON.stringify(demoSeed[domain]));
-}
-
-function writeDemo(domain: keyof typeof demoSeed, records: unknown) {
-  localStorage.setItem(`budget_buddy_demo_${domain}`, JSON.stringify(records));
-}
-
-function monthlyCost(amount: number, cycle: string) {
-  if (cycle === "weekly") return amount * 52 / 12;
-  if (cycle === "quarterly") return amount / 3;
-  if (cycle === "yearly") return amount / 12;
-  return amount;
-}
-
-export const isPreviewMode = () => !localStorage.getItem("budget_buddy_access_token");
-
-export async function upload<T>(path: string, formData: FormData): Promise<T> {
-  const token = localStorage.getItem("budget_buddy_access_token");
-  if (!token && path === "/transactions/import") {
-    const source = formData.get("file");
-    if (!(source instanceof File)) throw new ApiError("Choose a CSV file first.");
-    const rows = (await source.text()).split(/\r?\n/).filter(Boolean);
-    const headers = rows.shift()?.split(",").map(value => value.replaceAll('"', "").trim().toLowerCase()) ?? [];
-    const records = readDemo("transactions");
-    for (const row of rows) {
-      const values = row.split(",").map(value => value.replaceAll('"', "").trim());
-      const record = Object.fromEntries(headers.map((header, index) => [header, values[index]]));
-      records.unshift({ id: crypto.randomUUID(), merchant: record.merchant || record.description || "Imported", amount: Number(record.amount), transaction_date: record.date || record.transaction_date || null, category: record.category || "Other", transaction_type: record.type === "income" ? "income" : "expense", currency: record.currency || "SGD", source: "csv" });
-    }
-    writeDemo("transactions", records);
-    return { imported: rows.length } as T;
-  }
-  if (!token && path !== "/receipts/scan") {
-    throw new ApiError("Sign in is required for real receipt scanning. Preview mode no longer returns a fake receipt result.");
-    return {
-      merchant: "The Daily Table",
-      amount: 24.8,
-      transaction_date: new Date().toISOString().slice(0, 10),
-      category: "Food",
-      currency: "SGD",
-      confidence: 0.92,
-      notes: "Local preview extraction — review before saving.",
-    } as T;
-  }
-  const response = await fetch(`${API_URL}${path}`, {
+async function refreshAccessToken(): Promise<string | null> {
+  const refreshToken = localStorage.getItem(REFRESH_KEY);
+  if (!refreshToken) return null;
+  const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    body: formData,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
   });
   if (!response.ok) {
-    const body = await response.json().catch(() => ({}));
-    throw new ApiError(body.detail ?? "The receipt could not be scanned.");
+    clearSession();
+    return null;
   }
-  return response.json();
+  const session = await response.json();
+  if (!session.access_token) {
+    clearSession();
+    return null;
+  }
+  localStorage.setItem(ACCESS_KEY, session.access_token);
+  if (session.refresh_token) localStorage.setItem(REFRESH_KEY, session.refresh_token);
+  return session.access_token;
 }
 
-export async function api<T>(
-  path: string,
-  options: RequestInit = {},
-): Promise<T> {
-  const token = localStorage.getItem("budget_buddy_access_token");
-  if (!token) {
-    return demoData<T>(path, options);
+async function authenticatedFetch(path: string, options: RequestInit, retry = true) {
+  const token = localStorage.getItem(ACCESS_KEY);
+  if (!token) throw new ApiError("Sign in to access your synced financial data.", 401);
+  const headers = new Headers(options.headers);
+  headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(`${API_URL}${path}`, { ...options, headers });
+  if (response.status === 401 && retry) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) return authenticatedFetch(path, options, false);
+    window.location.assign("/auth");
   }
-  const response = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-      ...options.headers,
-    },
-  });
+  return response;
+}
+
+async function result<T>(response: Response, fallback: string): Promise<T> {
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new ApiError(body.detail ?? "Something went wrong. Please try again.");
+    throw new ApiError(body.detail ?? fallback, response.status);
   }
   if (response.status === 204) return undefined as T;
   return response.json();
+}
+
+export async function upload<T>(path: string, formData: FormData): Promise<T> {
+  const response = await authenticatedFetch(path, { method: "POST", body: formData });
+  return result<T>(response, "The file could not be processed.");
+}
+
+export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const headers = new Headers(options.headers);
+  if (options.body && !(options.body instanceof FormData)) headers.set("Content-Type", "application/json");
+  const response = await authenticatedFetch(path, { ...options, headers });
+  return result<T>(response, "Something went wrong. Please try again.");
 }

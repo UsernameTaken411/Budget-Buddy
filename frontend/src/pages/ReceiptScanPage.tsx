@@ -196,7 +196,7 @@ export function ReceiptScanPage() {
               </form>
             ) : (
               <div className="grid min-h-[420px] place-items-center text-center">
-                <div><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white/[0.04] text-slate-500"><ShieldCheck size={26} /></span><h2 className="mt-5 font-bold">Nothing is saved automatically</h2><p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">After scanning, the extracted details appear here for your confirmation. This local preview works without an account.</p></div>
+                <div><span className="mx-auto grid h-14 w-14 place-items-center rounded-2xl bg-white/[0.04] text-slate-500"><ShieldCheck size={26} /></span><h2 className="mt-5 font-bold">Nothing is saved automatically</h2><p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-500">After Azure scans the receipt, review the details before saving them to your synced Supabase account.</p></div>
               </div>
             )}
           </section>
