@@ -37,12 +37,15 @@ SYSTEM_PROMPT = (
 )
 
 # NOT the same as the "~600 tokens" guidance baked into SYSTEM_PROMPT above.
-# On Azure AI Foundry, reasoning-capable deployments spend hidden reasoning
-# tokens out of this same budget before writing any visible text — a tight
-# cap here can silently consume the whole budget on reasoning and leave
-# output_text empty. Keep this generous; let the prompt's own wording shape
-# how long the visible answer actually is.
-MAX_OUTPUT_TOKENS = 1500
+# On Azure AI Foundry, reasoning-capable deployments (this one is gpt-5-mini)
+# spend hidden reasoning tokens out of this same budget before writing any
+# visible text. Confirmed in production logs on 2026-07-24: a plain question
+# ("how should i save 1000 in fastest way") burned all 1472 of its output
+# tokens on reasoning and produced zero visible text, even with a 1500 cap -
+# raising this number alone doesn't fix it, it just delays the same failure
+# on a harder question. The actual fix is capping reasoning effort itself
+# (see `reasoning` in the payload below); this stays generous as a backstop.
+MAX_OUTPUT_TOKENS = 2000
 
 
 def ask_azure_ai(question: str, context: dict) -> str:
@@ -59,6 +62,13 @@ def ask_azure_ai(question: str, context: dict) -> str:
     payload = {
         "model": deployment,
         "max_output_tokens": MAX_OUTPUT_TOKENS,
+        # Caps how much hidden reasoning the model does before writing the
+        # visible answer. Without this, gpt-5-mini can spend the *entire*
+        # max_output_tokens budget on reasoning and emit no text at all -
+        # confirmed via usage logs (reasoning_tokens == output_tokens, no
+        # text output item). "low" is plenty for a finance-assistant chat
+        # answer that's meant to be ~600 tokens of prose anyway.
+        "reasoning": {"effort": "low"},
         "input": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {

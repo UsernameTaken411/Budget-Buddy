@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { apiFetch } from "../services/api";
 import { formatAmount } from "../services/categories";
-import { ExclamationCircleIcon, PlusIcon, TrashIcon } from "../components/icons.jsx";
+import { ExclamationCircleIcon, PlusIcon, ShieldCheckIcon, TrashIcon } from "../components/icons.jsx";
 
 export default function Savings() {
   const [goals, setGoals] = useState(null);
@@ -178,52 +178,70 @@ export default function Savings() {
       )}
 
       <div className="flex flex-col gap-3">
-        {list.map((g) => (
-          <div key={g.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-            <div className="flex items-center justify-between">
-              <span className="font-medium text-neutral-100">{g.name}</span>
-              <button
-                onClick={() => handleDelete(g.id)}
-                className="text-neutral-500 hover:text-rose-400"
-                aria-label="Remove goal"
-              >
-                <TrashIcon className="h-4 w-4" />
-              </button>
+        {list.map((g) => {
+          const reached = g.progress_percent >= 100;
+          return (
+            <div
+              key={g.id}
+              className={`rounded-2xl border p-4 ${
+                reached ? "border-emerald-400/30 bg-emerald-400/[0.04]" : "border-white/10 bg-white/[0.03]"
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <span className="flex items-center gap-2 font-medium text-neutral-100">
+                  {g.name}
+                  {reached && (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-400/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
+                      <ShieldCheckIcon className="h-3.5 w-3.5" />
+                      Goal reached
+                    </span>
+                  )}
+                </span>
+                <button
+                  onClick={() => handleDelete(g.id)}
+                  className="text-neutral-500 hover:text-rose-400"
+                  aria-label="Remove goal"
+                >
+                  <TrashIcon className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className={`h-full rounded-full ${reached ? "bg-sky-400" : "bg-emerald-400"}`}
+                  style={{ width: `${Math.min(g.progress_percent, 100)}%` }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-neutral-500">
+                <span>
+                  {formatAmount(g.current_amount)} of {formatAmount(g.target_amount)}
+                  {g.target_date ? ` · by ${g.target_date}` : ""}
+                </span>
+                <span className={reached ? "font-semibold text-sky-400" : ""}>
+                  {g.progress_percent}%
+                </span>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <input
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="Add contribution"
+                  value={contribution[g.id] ?? ""}
+                  onChange={(e) =>
+                    setContribution((c) => ({ ...c, [g.id]: e.target.value }))
+                  }
+                  className="w-40 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white placeholder:text-neutral-600"
+                />
+                <button
+                  onClick={() => handleContribute(g.id)}
+                  className="rounded-xl border border-white/10 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
+                >
+                  Contribute
+                </button>
+              </div>
             </div>
-            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-emerald-400"
-                style={{ width: `${Math.min(g.progress_percent, 100)}%` }}
-              />
-            </div>
-            <div className="mt-2 flex items-center justify-between text-xs text-neutral-500">
-              <span>
-                {formatAmount(g.current_amount)} of {formatAmount(g.target_amount)}
-                {g.target_date ? ` · by ${g.target_date}` : ""}
-              </span>
-              <span>{g.progress_percent}%</span>
-            </div>
-            <div className="mt-3 flex gap-2">
-              <input
-                type="number"
-                min="0.01"
-                step="0.01"
-                placeholder="Add contribution"
-                value={contribution[g.id] ?? ""}
-                onChange={(e) =>
-                  setContribution((c) => ({ ...c, [g.id]: e.target.value }))
-                }
-                className="w-40 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white placeholder:text-neutral-600"
-              />
-              <button
-                onClick={() => handleContribute(g.id)}
-                className="rounded-xl border border-white/10 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
-              >
-                Contribute
-              </button>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
