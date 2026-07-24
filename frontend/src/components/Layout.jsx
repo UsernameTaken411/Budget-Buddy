@@ -8,6 +8,7 @@ const LINKS = [
   { to: "/budgets", label: "Budgets" },
   { to: "/savings", label: "Savings" },
   { to: "/subscriptions", label: "Subscriptions" },
+  { to: "/receipts/scan", label: "Scan receipt" },
   // { to: "/dashboard", label: "Dashboard" },  C
   { to: "/profile", label: "Profile" },
 ];

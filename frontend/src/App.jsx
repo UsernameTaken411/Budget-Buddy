@@ -8,6 +8,7 @@ import Profile from "./pages/Profile.jsx";
 import Budgets from "./pages/Budgets.jsx";
 import Savings from "./pages/Savings.jsx";
 import Subscriptions from "./pages/Subscriptions.jsx";
+import ReceiptScan from "./pages/ReceiptScan.jsx";
 
 // B and C: add your routes inside the ProtectedRoute block, next to
 // /transactions. The nav links live in components/Layout.jsx.
@@ -24,6 +25,7 @@ export default function App() {
           <Route path="/budgets" element={<Budgets />} />
           <Route path="/savings" element={<Savings />} />
           <Route path="/subscriptions" element={<Subscriptions />} />
+          <Route path="/receipts/scan" element={<ReceiptScan />} />
           {/* <Route path="/dashboard" element={<Dashboard />} /> C */}
         </Route>
       </Route>
