@@ -5,7 +5,9 @@ import { useAuth } from "../services/auth.jsx";
 // LINKS array below rather than building your own header.
 const LINKS = [
   { to: "/transactions", label: "Transactions" },
-  // { to: "/budgets", label: "Budgets" },      B
+  { to: "/budgets", label: "Budgets" },
+  { to: "/savings", label: "Savings" },
+  { to: "/subscriptions", label: "Subscriptions" },
   // { to: "/dashboard", label: "Dashboard" },  C
   { to: "/profile", label: "Profile" },
 ];
