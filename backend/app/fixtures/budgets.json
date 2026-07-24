@@ -1,0 +1,5 @@
+[
+  { "id": "b1", "category": "Groceries", "amount": 400.00, "spent": 186.05, "remaining": 213.95, "period": "monthly" },
+  { "id": "b2", "category": "Transport", "amount": 150.00, "spent": 55.80, "remaining": 94.20, "period": "monthly" },
+  { "id": "b3", "category": "Subscriptions", "amount": 50.00, "spent": 14.90, "remaining": 35.10, "period": "monthly" }
+]
