@@ -8,8 +8,6 @@ class Settings(BaseSettings):
     supabase_url: str = ""
     supabase_anon_key: str = ""
     frontend_origin: str = "http://localhost:5173"
-    openai_api_key: str | None = None
-    openai_model: str = "gpt-4o-mini"
     azure_ai_foundry_endpoint: str = ""
     azure_ai_foundry_api_key: str = ""
     azure_ai_foundry_model_deployment: str = Field(

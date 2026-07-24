@@ -4,7 +4,6 @@ import logging
 
 import httpx
 from fastapi import HTTPException
-from openai import AsyncOpenAI
 
 from .config import get_settings
 from .models import ReceiptExtraction
@@ -77,11 +76,9 @@ async def extract_receipt(
     settings = get_settings()
     if settings.is_azure_ai_configured:
         return await _extract_with_azure(image_bytes, content_type, budget_categories or [])
-    if settings.openai_api_key:
-        return await _extract_with_openai(image_bytes, content_type, budget_categories or [])
     raise HTTPException(
         status_code=503,
-        detail="Receipt scanning is not configured. Add Azure AI Foundry or OpenAI settings.",
+        detail="Receipt scanning is not configured. Add the Azure AI Foundry settings.",
     )
 
 
@@ -256,53 +253,3 @@ related, return null rather than forcing a weak match.
             status_code=502,
             detail="Azure AI could not structure this receipt. Try the scan again.",
         ) from exc
-
-
-async def _extract_with_openai(
-    image_bytes: bytes, content_type: str, budget_categories: list[str]
-) -> ReceiptExtraction:
-    settings = get_settings()
-
-    encoded = base64.b64encode(image_bytes).decode("ascii")
-    client = AsyncOpenAI(api_key=settings.openai_api_key)
-    try:
-        response = await client.beta.chat.completions.parse(
-            model=settings.openai_model,
-            messages=[
-                {
-                    "role": "system",
-                    "content": "You extract structured expense data from receipt images.",
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": RECEIPT_PROMPT
-                            + "\nThe user's budget categories are "
-                            + json.dumps(budget_categories)
-                            + ". Set recommended_budget_category to the exact best "
-                            "semantic match, or null when none fits.",
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{content_type};base64,{encoded}",
-                                "detail": "high",
-                            },
-                        },
-                    ],
-                },
-            ],
-            response_format=ReceiptExtraction,
-        )
-    except Exception as exc:
-        raise HTTPException(
-            status_code=502,
-            detail="The receipt could not be read. Try a clearer, well-lit photo.",
-        ) from exc
-
-    parsed = response.choices[0].message.parsed
-    if not parsed:
-        raise HTTPException(422, "No receipt details could be extracted.")
-    return parsed

@@ -1,5 +1,6 @@
 import { Download, Plus, Trash2, Upload } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, upload } from "../services/api";
 import type { Transaction } from "../types";
 
@@ -10,6 +11,9 @@ export function TransactionsPage() {
   const [items, setItems] = useState<Transaction[]>([]);
   const [form, setForm] = useState(empty);
   const [open, setOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
   const file = useRef<HTMLInputElement>(null);
   const load = () => api<Transaction[]>("/transactions").then(setItems);
   useEffect(() => { load(); }, []);
@@ -21,8 +25,15 @@ export function TransactionsPage() {
   async function remove(id: string) { await api(`/transactions/${id}`, { method: "DELETE" }); load(); }
   async function importCsv(selected?: File) {
     if (!selected) return;
-    const data = new FormData(); data.append("file", selected);
-    await upload("/transactions/import", data); load();
+    setImporting(true); setNotice(""); setError("");
+    try {
+      const data = new FormData(); data.append("file", selected);
+      const result = await upload<{ imported: number; skipped: number }>("/transactions/import", data);
+      setNotice(`${result.imported} bank transactions imported and categorized by Azure AI${result.skipped ? `; ${result.skipped} rows skipped` : ""}.`);
+      await load();
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "The CSV could not be imported.");
+    } finally { setImporting(false); if (file.current) file.current.value = ""; }
   }
   function exportCsv() {
     const rows = [["date", "merchant", "category", "type", "amount", "currency"], ...items.map(t => [t.transaction_date ?? "", t.merchant, t.category, t.transaction_type, String(t.amount), t.currency])];
@@ -31,6 +42,9 @@ export function TransactionsPage() {
   }
   return <div className="space-y-7">
     <div className="flex flex-wrap items-end justify-between gap-4"><div><p className="eyebrow">Money log</p><h1 className="page-title">Transactions</h1><p className="page-copy">Review every expense and income entry in one place.</p></div><div className="flex gap-2"><button className="btn-secondary" onClick={() => file.current?.click()}><Upload size={16} /> Import CSV</button><button className="btn-secondary" onClick={exportCsv}><Download size={16} /> Export</button><button className="btn-primary" onClick={() => setOpen(!open)}><Plus size={16} /> Add</button><input ref={file} className="hidden" type="file" accept=".csv,text/csv" onChange={e => importCsv(e.target.files?.[0])} /></div></div>
+    <section className="card flex flex-wrap items-center justify-between gap-5 border-emerald-300/15 bg-emerald-300/[0.035]"><div className="flex items-start gap-4"><span className="grid h-11 w-11 place-items-center rounded-xl bg-emerald-400/10 text-emerald-300"><Upload size={20} /></span><div><h2 className="font-bold">Import bank transaction history</h2><p className="mt-1 max-w-2xl text-sm leading-6 text-slate-400">Upload CSV exports from your bank. Date, description, debit/credit, withdrawal/deposit, amount and currency columns are detected automatically. Azure AI categorizes every valid row.</p></div></div><button className="btn-primary" disabled={importing} onClick={() => file.current?.click()}>{importing ? "Importing with Azure…" : "Choose bank CSV"}</button></section>
+    {notice && <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-emerald-400/10 px-4 py-3 text-sm text-emerald-200"><span>{notice}</span><Link className="font-bold underline" to="/insights">Generate analysis report</Link></div>}
+    {error && <p className="rounded-xl bg-rose-400/10 p-3 text-sm text-rose-300">{error}</p>}
     {open && <form className="card grid gap-4 p-6 md:grid-cols-2" onSubmit={submit}>
       <label>Merchant<input className="field mt-2" required value={form.merchant} onChange={e => setForm({ ...form, merchant: e.target.value })} /></label>
       <label>Amount<input className="field mt-2" required min="0.01" step="0.01" type="number" value={form.amount} onChange={e => setForm({ ...form, amount: e.target.value })} /></label>

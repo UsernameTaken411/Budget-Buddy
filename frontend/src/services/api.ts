@@ -34,20 +34,7 @@ function nextDate(days: number) {
 function demoData<T>(path: string, options: RequestInit): T {
   const method = options.method ?? "GET";
   if (path === "/insights/ask") {
-    const question = String(options.body ? JSON.parse(String(options.body)).question : "").toLowerCase();
-    const transactions = readDemo("transactions") as Array<{ transaction_type: string; amount: number; category: string }>;
-    const expenses = transactions.filter((t: { transaction_type: string }) => t.transaction_type === "expense");
-    const income = transactions.filter((t: { transaction_type: string }) => t.transaction_type === "income").reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0);
-    const spent = expenses.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0);
-    const categories: Record<string, number> = {};
-    for (const transaction of expenses) categories[transaction.category] = (categories[transaction.category] ?? 0) + Number(transaction.amount);
-    const top = Object.entries(categories).sort((a, b) => b[1] - a[1])[0] ?? ["None", 0];
-    const answer = question.includes("category") || question.includes("most") || question.includes("largest")
-      ? `Your largest expense category is ${top[0]} at $${Number(top[1]).toFixed(2)}.`
-      : question.includes("balance") || question.includes("left") || question.includes("afford")
-        ? `Your recorded income is $${income.toFixed(2)}, expenses are $${spent.toFixed(2)}, leaving $${(income - spent).toFixed(2)}.`
-        : `You have recorded $${spent.toFixed(2)} in expenses across ${expenses.length} transactions.`;
-    return { answer } as T;
+    throw new ApiError("Sign in to use Azure AI financial analysis.");
   }
   if (path.startsWith("/transactions")) {
     const records = readDemo("transactions");
