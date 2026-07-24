@@ -1,12 +1,28 @@
--- Budget Buddy — full schema, run once in the Supabase SQL editor.
+-- Budget Buddy — full schema. Run this once in the Supabase SQL Editor.
 --
 -- Covers all three verticals per SCHEMA.md (the locked integration contract):
 --   A: transactions, profiles
 --   B: budgets, savings_goals, subscriptions
 --   C: read-only consumer, no tables of its own
 --
--- Safe to re-run: every statement is idempotent (create-if-not-exists /
--- drop-then-create for policies and views).
+-- Safe to run on a brand-new empty project OR one that already has an
+-- older/mismatched version of these tables — it drops each table first
+-- (if it exists) before recreating it, so there's no drift between what's
+-- in the database and what this file says the schema should be.
+--
+-- This DELETES any existing rows in these five tables. Fine for hackathon/
+-- dev data; do not run this against anything with real user data without
+-- backing it up first.
+
+drop view if exists public.budget_progress cascade;
+drop view if exists public.savings_goal_progress cascade;
+drop view if exists public.subscription_costs cascade;
+
+drop table if exists public.transactions cascade;
+drop table if exists public.profiles cascade;
+drop table if exists public.budgets cascade;
+drop table if exists public.savings_goals cascade;
+drop table if exists public.subscriptions cascade;
 
 create extension if not exists "pgcrypto";
 
@@ -14,7 +30,7 @@ create extension if not exists "pgcrypto";
 -- A — transactions, profiles  (SCHEMA.md §1, §3)
 -- ===========================================================================
 
-create table if not exists public.transactions (
+create table public.transactions (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade,
   amount      numeric(12,2) not null,
@@ -29,12 +45,10 @@ create table if not exists public.transactions (
   constraint transactions_amount_nonzero check (amount <> 0)
 );
 
-create index if not exists transactions_user_date_idx
-  on public.transactions (user_id, date desc);
-create index if not exists transactions_user_category_idx
-  on public.transactions (user_id, category);
+create index transactions_user_date_idx on public.transactions (user_id, date desc);
+create index transactions_user_category_idx on public.transactions (user_id, category);
 
-create table if not exists public.profiles (
+create table public.profiles (
   id           uuid primary key references auth.users(id) on delete cascade,
   user_id      uuid not null references auth.users(id) on delete cascade,
   display_name text not null default '',
@@ -46,7 +60,7 @@ create table if not exists public.profiles (
 -- B — budgets, savings_goals, subscriptions  (SCHEMA.md §4, as actually built)
 -- ===========================================================================
 
-create table if not exists public.budgets (
+create table public.budgets (
   id         uuid primary key default gen_random_uuid(),
   user_id    uuid not null references auth.users(id) on delete cascade,
   category   text not null check (char_length(trim(category)) between 1 and 80),
@@ -57,7 +71,7 @@ create table if not exists public.budgets (
   unique (user_id, category, period)
 );
 
-create table if not exists public.savings_goals (
+create table public.savings_goals (
   id             uuid primary key default gen_random_uuid(),
   user_id        uuid not null references auth.users(id) on delete cascade,
   name           text not null check (char_length(trim(name)) between 1 and 100),
@@ -68,7 +82,7 @@ create table if not exists public.savings_goals (
   updated_at     timestamptz not null default now()
 );
 
-create table if not exists public.subscriptions (
+create table public.subscriptions (
   id                    uuid primary key default gen_random_uuid(),
   user_id               uuid not null references auth.users(id) on delete cascade,
   name                  text not null check (char_length(trim(name)) between 1 and 100),
@@ -84,10 +98,9 @@ create table if not exists public.subscriptions (
   updated_at            timestamptz not null default now()
 );
 
-create index if not exists budgets_user_id_idx on public.budgets(user_id);
-create index if not exists savings_goals_user_id_idx on public.savings_goals(user_id);
-create index if not exists subscriptions_user_date_idx
-  on public.subscriptions(user_id, next_billing_date);
+create index budgets_user_id_idx on public.budgets(user_id);
+create index savings_goals_user_id_idx on public.savings_goals(user_id);
+create index subscriptions_user_date_idx on public.subscriptions(user_id, next_billing_date);
 
 -- ===========================================================================
 -- RLS — identical "own rows" policy on every table (SCHEMA.md §6)
@@ -98,12 +111,6 @@ alter table public.profiles       enable row level security;
 alter table public.budgets        enable row level security;
 alter table public.savings_goals  enable row level security;
 alter table public.subscriptions  enable row level security;
-
-drop policy if exists "own rows" on public.transactions;
-drop policy if exists "own rows" on public.profiles;
-drop policy if exists "own rows" on public.budgets;
-drop policy if exists "own rows" on public.savings_goals;
-drop policy if exists "own rows" on public.subscriptions;
 
 create policy "own rows" on public.transactions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -119,8 +126,7 @@ create policy "own rows" on public.subscriptions
 -- ===========================================================================
 -- Derived views — server-side aggregation so B's frontend doesn't recompute
 -- spend/progress client-side. Built against A's real transactions schema
--- (signed amount, `date`, closed category enum) — NOT the old
--- transaction_type/transaction_date shape from an earlier draft.
+-- (signed amount, `date`, closed category enum).
 -- ===========================================================================
 
 create or replace view public.budget_progress
