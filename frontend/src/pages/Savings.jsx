@@ -240,7 +240,7 @@ export default function Savings() {
                   />
                   <button
                     onClick={() => handleContribute(g.id)}
-                    className="rounded-xl border border-white/10 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
+                    className="rounded-xl bg-emerald-400 px-3 py-1.5 text-sm font-semibold text-neutral-950 hover:bg-emerald-300"
                   >
                     Contribute
                   </button>
