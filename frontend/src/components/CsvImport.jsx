@@ -1,8 +1,11 @@
 import { useRef, useState } from "react";
 import { apiFetch } from "../services/api.js";
+import { UploadIcon } from "./icons.jsx";
 
 // Posts the file to /transactions/import. Format detection (generic vs
 // DBS/POSB) happens server-side — the user just drops the file in.
+// The hidden <input id="csv-file-input"> is also triggered by the
+// "Import CSV" shortcut button in the Transactions page header.
 
 export default function CsvImport({ onImported }) {
   const inputRef = useRef(null);
@@ -35,86 +38,94 @@ export default function CsvImport({ onImported }) {
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <h2 className="mb-1 text-sm font-semibold text-slate-900">Import CSV</h2>
-      <p className="mb-3 text-xs text-slate-500">
-        Generic CSV or a DBS/POSB statement export — the format is detected
-        automatically.
-      </p>
-
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragging(false);
-          upload(e.dataTransfer.files?.[0]);
-        }}
-        onClick={() => inputRef.current?.click()}
-        className={`cursor-pointer rounded-md border-2 border-dashed px-4 py-8 text-center transition ${
-          dragging
-            ? "border-slate-900 bg-slate-50"
-            : "border-slate-300 hover:border-slate-400"
-        }`}
-      >
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,text/csv"
-          className="hidden"
-          onChange={(e) => upload(e.target.files?.[0])}
-        />
-        <p className="text-sm text-slate-600">
-          {busy ? "Importing…" : "Drop a CSV here, or click to choose"}
-        </p>
-      </div>
-
-      {error && (
-        <div
-          role="alert"
-          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
-        >
-          {error}
-        </div>
-      )}
-
-      {result && (
-        <div className="mt-3 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm">
-          <p className="font-medium text-slate-900">
-            Imported {result.imported}
-            {result.skipped > 0 && (
-              <span className="font-normal text-slate-500">
-                {" "}
-                · {result.skipped} duplicate
-                {result.skipped === 1 ? "" : "s"} skipped
-              </span>
-            )}
-          </p>
-          <p className="text-xs text-slate-500">
-            Detected format:{" "}
-            {result.detected_format === "dbs_posb" ? "DBS/POSB" : "generic"}
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragging(false);
+        upload(e.dataTransfer.files?.[0]);
+      }}
+      className={`flex flex-col gap-4 rounded-2xl border p-5 transition sm:flex-row sm:items-center sm:justify-between ${
+        dragging ? "border-emerald-400/50 bg-emerald-400/5" : "border-white/10 bg-white/[0.03]"
+      }`}
+    >
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-400">
+          <UploadIcon className="h-5 w-5" />
+        </span>
+        <div>
+          <h2 className="text-sm font-semibold text-white">
+            Import bank transaction history
+          </h2>
+          <p className="mt-1 max-w-md text-xs text-neutral-500">
+            Upload CSV exports from your bank. Date, description, debit/credit,
+            withdrawal/deposit, amount and currency columns are detected automatically. Azure AI
+            categorizes every valid row.
           </p>
 
-          {result.errors?.length > 0 && (
-            <details className="mt-2">
-              <summary className="cursor-pointer text-xs font-medium text-amber-700">
-                {result.errors.length} row
-                {result.errors.length === 1 ? "" : "s"} skipped due to errors
-              </summary>
-              <ul className="mt-1 space-y-0.5 text-xs text-slate-600">
-                {result.errors.slice(0, 10).map((e, i) => (
-                  <li key={i}>
-                    Row {e.row}: {e.message}
-                  </li>
-                ))}
-              </ul>
-            </details>
+          {error && (
+            <p role="alert" className="mt-2 text-xs font-medium text-rose-400">
+              {error}
+            </p>
+          )}
+
+          {result && (
+            <div className="mt-2 text-xs text-neutral-400">
+              <p className="font-medium text-neutral-200">
+                Imported {result.imported}
+                {result.skipped > 0 && (
+                  <span className="font-normal text-neutral-500">
+                    {" "}
+                    · {result.skipped} duplicate
+                    {result.skipped === 1 ? "" : "s"} skipped
+                  </span>
+                )}
+              </p>
+              <p>
+                Detected format:{" "}
+                {result.detected_format === "dbs_posb" ? "DBS/POSB" : "generic"}
+              </p>
+
+              {result.errors?.length > 0 && (
+                <details className="mt-1">
+                  <summary className="cursor-pointer font-medium text-amber-400">
+                    {result.errors.length} row
+                    {result.errors.length === 1 ? "" : "s"} skipped due to errors
+                  </summary>
+                  <ul className="mt-1 space-y-0.5">
+                    {result.errors.slice(0, 10).map((e, i) => (
+                      <li key={i}>
+                        Row {e.row}: {e.message}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
           )}
         </div>
-      )}
+      </div>
+
+      <input
+        id="csv-file-input"
+        ref={inputRef}
+        type="file"
+        accept=".csv,text/csv"
+        className="hidden"
+        onChange={(e) => upload(e.target.files?.[0])}
+      />
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        disabled={busy}
+        className="shrink-0 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-neutral-950 hover:bg-emerald-300 disabled:opacity-50"
+      >
+        {busy ? "Importing…" : "Choose bank CSV"}
+      </button>
     </div>
   );
 }

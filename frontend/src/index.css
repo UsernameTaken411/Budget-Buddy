@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Native number-input spinner arrows render as a light OS-styled box that
+   clashes with the dark theme — hide them everywhere. */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

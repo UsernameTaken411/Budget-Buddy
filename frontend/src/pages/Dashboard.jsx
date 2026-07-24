@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { apiFetch, fetchAllTransactions } from "../services/api";
-import { totalsByCategory, netCashflow, formatAmount } from "../services/categories";
-import InsightCard from "../components/InsightCard.jsx";
-import SpendingByCategoryChart from "../components/charts/SpendingByCategoryChart.jsx";
-import IncomeExpenseChart from "../components/charts/IncomeExpenseChart.jsx";
+import { totalsByCategory, netCashflow, formatAmount, CATEGORY_LABELS } from "../services/categories";
+import { ArrowDownRightIcon, ArrowUpRightIcon, CameraIcon, InboxIcon, PiggyBankIcon } from "../components/icons.jsx";
 
 function computeSummary(transactions) {
   const income = transactions.filter((t) => t.amount > 0).reduce((s, t) => s + t.amount, 0);
@@ -15,78 +14,6 @@ function computeSummary(transactions) {
     expenses: Math.round(expenses * 100) / 100,
     balance: netCashflow(transactions),
   };
-}
-
-function monthlyTrend(transactions) {
-  const byMonth = new Map();
-  for (const t of transactions) {
-    const month = t.date.slice(0, 7);
-    const entry = byMonth.get(month) || { month, income: 0, expenses: 0 };
-    if (t.amount > 0) entry.income += t.amount;
-    else if (t.category !== "transfer") entry.expenses -= t.amount;
-    byMonth.set(month, entry);
-  }
-  return [...byMonth.values()]
-    .map((e) => ({
-      ...e,
-      income: Math.round(e.income * 100) / 100,
-      expenses: Math.round(e.expenses * 100) / 100,
-    }))
-    .sort((a, b) => a.month.localeCompare(b.month));
-}
-
-function generateInsights(transactions, budgets) {
-  const insights = [];
-  const spent = totalsByCategory(transactions);
-
-  for (const b of budgets) {
-    const actual = spent[b.category] || 0;
-    if (actual > b.amount) {
-      insights.push({
-        type: `over_budget_${b.category}`,
-        severity: "warning",
-        message: `You're over budget in ${b.category}: ${formatAmount(actual)} spent vs a ${formatAmount(b.amount)} limit.`,
-      });
-    } else if (b.amount && actual / b.amount > 0.9) {
-      insights.push({
-        type: `near_budget_${b.category}`,
-        severity: "info",
-        message: `You're close to your ${b.category} budget: ${formatAmount(actual)} of ${formatAmount(b.amount)}.`,
-      });
-    }
-  }
-
-  const trend = monthlyTrend(transactions);
-  if (trend.length >= 2) {
-    const current = trend[trend.length - 1];
-    const previous = trend[trend.length - 2];
-    if (previous.expenses) {
-      const pctChange = Math.round(((current.expenses - previous.expenses) / previous.expenses) * 1000) / 10;
-      if (pctChange > 15) {
-        insights.push({
-          type: "spending_up",
-          severity: "warning",
-          message: `Spending is up ${pctChange}% vs last month (${formatAmount(current.expenses)} vs ${formatAmount(previous.expenses)}).`,
-        });
-      } else if (pctChange < -15) {
-        insights.push({
-          type: "spending_down",
-          severity: "positive",
-          message: `Nice — spending is down ${Math.abs(pctChange)}% vs last month.`,
-        });
-      }
-    }
-  }
-
-  if (insights.length === 0) {
-    insights.push({
-      type: "all_good",
-      severity: "positive",
-      message: "No budget issues detected this month. Keep it up!",
-    });
-  }
-
-  return insights;
 }
 
 export default function Dashboard() {
@@ -118,73 +45,173 @@ export default function Dashboard() {
   }, []);
 
   if (state.status === "loading") {
-    return <p className="text-slate-500">Loading your dashboard…</p>;
+    return <p className="text-sm text-neutral-400">Loading your dashboard…</p>;
   }
 
   if (state.status === "error") {
     return (
-      <div className="rounded-lg border border-red-300 bg-red-50 p-4 text-red-800">
+      <div className="rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
         Couldn't load your data: {state.error}
       </div>
     );
   }
 
   const { transactions, budgets } = state;
-
-  if (transactions.length === 0) {
-    return (
-      <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center text-slate-500">
-        No transactions yet — add one on the Transactions page to see your dashboard.
-      </div>
-    );
-  }
-
   const summary = computeSummary(transactions);
-  const byCategory = totalsByCategory(transactions);
-  const chartData = Object.entries(byCategory)
-    .map(([category, amount]) => ({ category, amount }))
-    .sort((a, b) => b.amount - a.amount);
-  const trend = monthlyTrend(transactions);
-  const insights = generateInsights(transactions, budgets);
+  const byCategory = Object.entries(totalsByCategory(transactions)).sort((a, b) => b[1] - a[1]);
+  const maxCategory = byCategory.length ? byCategory[0][1] : 0;
+  const recent = [...transactions].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, 6);
 
   return (
-    <div className="space-y-8">
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-500">Income</p>
-          <p className="mt-1 text-2xl font-semibold text-emerald-600">{formatAmount(summary.income)}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-500">Expenses</p>
-          <p className="mt-1 text-2xl font-semibold text-red-600">{formatAmount(summary.expenses)}</p>
-        </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="text-sm text-slate-500">Balance</p>
-          <p className={`mt-1 text-2xl font-semibold ${summary.balance >= 0 ? "text-emerald-600" : "text-red-600"}`}>
-            {formatAmount(summary.balance)}
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm text-neutral-400">Overview</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            Your money at a glance
+          </h1>
+          <p className="mt-1 max-w-lg text-sm text-neutral-400">
+            A clear view of what came in, went out, and needs attention.
           </p>
         </div>
-      </section>
+        <Link
+          to="/receipts/scan"
+          className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-neutral-950 transition hover:bg-emerald-300"
+        >
+          <CameraIcon className="h-4 w-4" />
+          Scan a receipt
+        </Link>
+      </div>
 
-      <section className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="mb-2 text-sm font-medium text-slate-700">Spending by category</p>
-          <SpendingByCategoryChart data={chartData} />
+      {transactions.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-white/15 p-10 text-center text-sm text-neutral-500">
+          No transactions yet — add one on the Transactions page to see your dashboard.
         </div>
-        <div className="rounded-xl border border-slate-200 bg-white p-4">
-          <p className="mb-2 text-sm font-medium text-slate-700">Income vs. expenses</p>
-          <IncomeExpenseChart data={trend} />
-        </div>
-      </section>
+      ) : (
+        <>
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-start justify-between">
+                <p className="text-sm text-neutral-400">Available balance</p>
+                <InboxIcon className="h-4 w-4 text-neutral-500" />
+              </div>
+              <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                {formatAmount(summary.balance)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-start justify-between">
+                <p className="text-sm text-neutral-400">Income</p>
+                <ArrowUpRightIcon className="h-4 w-4 text-emerald-400" />
+              </div>
+              <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                {formatAmount(summary.income)}
+              </p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-start justify-between">
+                <p className="text-sm text-neutral-400">Expenses</p>
+                <ArrowDownRightIcon className="h-4 w-4 text-rose-400" />
+              </div>
+              <p className="mt-2 text-2xl font-bold text-white sm:text-3xl">
+                {formatAmount(summary.expenses)}
+              </p>
+            </div>
+          </section>
 
-      <section>
-        <p className="mb-3 text-sm font-medium text-slate-700">Insights</p>
-        <div className="space-y-2">
-          {insights.map((insight) => (
-            <InsightCard key={insight.type} insight={insight} />
-          ))}
-        </div>
-      </section>
+          <section className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <p className="mb-4 text-sm font-semibold text-white">Spending by category</p>
+              {byCategory.length === 0 ? (
+                <p className="text-sm text-neutral-500">No expenses recorded yet.</p>
+              ) : (
+                <div className="space-y-4">
+                  {byCategory.slice(0, 6).map(([category, amount]) => (
+                    <div key={category}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium text-neutral-200">
+                          {CATEGORY_LABELS[category] ?? category}
+                        </span>
+                        <span className="text-neutral-400">{formatAmount(amount)}</span>
+                      </div>
+                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                        <div
+                          className="h-full rounded-full bg-emerald-400"
+                          style={{
+                            width: `${maxCategory ? Math.max((amount / maxCategory) * 100, 4) : 0}%`,
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="mb-4 flex items-center gap-2">
+                <PiggyBankIcon className="h-4 w-4 text-emerald-400" />
+                <p className="text-sm font-semibold text-white">Budget health</p>
+              </div>
+              {budgets.length === 0 ? (
+                <p className="text-sm text-neutral-500">
+                  No budgets set yet — add one on the Budgets page.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {budgets.map((b) => {
+                    const pct = b.amount > 0 ? Math.min((b.spent / b.amount) * 100, 100) : 0;
+                    const over = b.spent > b.amount;
+                    return (
+                      <div key={b.id}>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium text-neutral-200">
+                            {CATEGORY_LABELS[b.category] ?? b.category}
+                          </span>
+                          <span className="text-neutral-400">
+                            {formatAmount(b.spent)} / {formatAmount(b.amount)}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                          <div
+                            className={`h-full rounded-full ${over ? "bg-rose-400" : "bg-emerald-400"}`}
+                            style={{ width: `${Math.max(pct, 4)}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+            <p className="mb-3 text-sm font-semibold text-white">Recent activity</p>
+            <div className="divide-y divide-white/5">
+              {recent.map((t) => (
+                <div key={t.id} className="flex items-center justify-between py-3">
+                  <div className="min-w-0 pr-4">
+                    <p className="truncate text-sm font-medium text-neutral-100">
+                      {t.description || (CATEGORY_LABELS[t.category] ?? t.category)}
+                    </p>
+                    <p className="text-xs text-neutral-500">
+                      {CATEGORY_LABELS[t.category] ?? t.category} · {t.date}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 text-sm font-semibold ${
+                      t.amount > 0 ? "text-emerald-400" : "text-neutral-200"
+                    }`}
+                  >
+                    {formatAmount(t.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        </>
+      )}
     </div>
   );
 }

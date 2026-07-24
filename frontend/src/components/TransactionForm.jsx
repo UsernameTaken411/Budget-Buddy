@@ -7,6 +7,9 @@ import { CATEGORIES, CATEGORY_LABELS } from "../services/categories.js";
 
 const today = () => new Date().toISOString().slice(0, 10);
 
+const inputClass =
+  "w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-emerald-400/50";
+
 export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
   const editing = Boolean(initial);
 
@@ -64,16 +67,16 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-lg border border-slate-200 bg-white p-4"
+      className="rounded-2xl border border-white/10 bg-white/[0.03] p-4"
     >
       <div className="mb-3 flex gap-2">
         <button
           type="button"
           onClick={() => handleDirection("expense")}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+          className={`flex-1 rounded-xl px-3 py-1.5 text-sm font-medium transition ${
             direction === "expense"
-              ? "bg-red-600 text-white"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              ? "bg-rose-500 text-white"
+              : "bg-white/5 text-neutral-400 hover:bg-white/10"
           }`}
         >
           Expense
@@ -81,10 +84,10 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
         <button
           type="button"
           onClick={() => handleDirection("income")}
-          className={`flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition ${
+          className={`flex-1 rounded-xl px-3 py-1.5 text-sm font-medium transition ${
             direction === "income"
-              ? "bg-green-600 text-white"
-              : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              ? "bg-emerald-400 text-neutral-950"
+              : "bg-white/5 text-neutral-400 hover:bg-white/10"
           }`}
         >
           Income
@@ -93,7 +96,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-neutral-400">
             Amount (SGD)
           </label>
           <input
@@ -104,12 +107,12 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
             placeholder="0.00"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+            className={inputClass}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-neutral-400">
             Date
           </label>
           <input
@@ -117,18 +120,18 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
             required
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+            className={inputClass}
           />
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-neutral-400">
             Category
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+            className={`${inputClass} bg-[#0b0f0f]`}
           >
             {CATEGORIES.map((c) => (
               <option key={c} value={c}>
@@ -139,7 +142,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
         </div>
 
         <div>
-          <label className="mb-1 block text-xs font-medium text-slate-600">
+          <label className="mb-1 block text-xs font-medium text-neutral-400">
             Description
           </label>
           <input
@@ -148,7 +151,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
             placeholder="Kopitiam lunch"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none focus:border-slate-900 focus:ring-1 focus:ring-slate-900"
+            className={inputClass}
           />
         </div>
       </div>
@@ -156,7 +159,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
       {error && (
         <div
           role="alert"
-          className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700"
+          className="mt-3 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-300"
         >
           {error}
         </div>
@@ -166,7 +169,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
         <button
           type="submit"
           disabled={busy}
-          className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          className="rounded-xl bg-emerald-400 px-4 py-2 text-sm font-semibold text-neutral-950 hover:bg-emerald-300 disabled:opacity-50"
         >
           {busy ? "Saving…" : editing ? "Save changes" : "Add transaction"}
         </button>
@@ -174,7 +177,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
           <button
             type="button"
             onClick={onCancel}
-            className="rounded-md border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-100"
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm font-medium text-neutral-300 hover:bg-white/5"
           >
             Cancel
           </button>

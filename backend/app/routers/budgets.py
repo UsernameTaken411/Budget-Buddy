@@ -30,10 +30,11 @@ def list_budgets(user: CurrentUser = Depends(get_current_user)):
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_budget(payload: BudgetCreate, user: CurrentUser = Depends(get_current_user)):
+    row = {**payload.model_dump(mode="json"), "user_id": user.id}  # from the token, never from the body
     rows = (
         db_for_user(user)
         .table("budgets")
-        .insert(payload.model_dump(mode="json"))
+        .insert(row)
         .execute()
         .data
     )

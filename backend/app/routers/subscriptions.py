@@ -31,10 +31,11 @@ def list_subscriptions(user: CurrentUser = Depends(get_current_user)):
 def create_subscription(
     payload: SubscriptionCreate, user: CurrentUser = Depends(get_current_user)
 ):
+    row = {**payload.model_dump(mode="json"), "user_id": user.id}  # from the token, never from the body
     rows = (
         db_for_user(user)
         .table("subscriptions")
-        .insert(payload.model_dump(mode="json"))
+        .insert(row)
         .execute()
         .data
     )

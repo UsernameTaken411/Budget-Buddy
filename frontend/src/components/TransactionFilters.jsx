@@ -1,25 +1,28 @@
 import { CATEGORIES, CATEGORY_LABELS } from "../services/categories.js";
 
+const fieldClass =
+  "rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-emerald-400/50";
+
 export default function TransactionFilters({ value, onChange, onClear, active }) {
   function set(patch) {
     onChange({ ...value, ...patch, offset: 0 }); // any filter change resets paging
   }
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-3">
+    <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
       <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
         <input
           type="search"
           placeholder="Search description…"
           value={value.q}
           onChange={(e) => set({ q: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-slate-900 lg:col-span-2"
+          className={`${fieldClass} lg:col-span-2`}
         />
 
         <select
           value={value.category}
           onChange={(e) => set({ category: e.target.value })}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm outline-none focus:border-slate-900"
+          className={`${fieldClass} bg-[#0b0f0f]`}
         >
           <option value="">All categories</option>
           {CATEGORIES.map((c) => (
@@ -33,13 +36,13 @@ export default function TransactionFilters({ value, onChange, onClear, active })
           type="date"
           value={value.start_date}
           onChange={(e) => set({ start_date: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-slate-900"
+          className={fieldClass}
         />
         <input
           type="date"
           value={value.end_date}
           onChange={(e) => set({ end_date: e.target.value })}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm outline-none focus:border-slate-900"
+          className={fieldClass}
         />
       </div>
 
@@ -50,7 +53,7 @@ export default function TransactionFilters({ value, onChange, onClear, active })
             const [sort, order] = e.target.value.split(":");
             set({ sort, order });
           }}
-          className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs outline-none focus:border-slate-900"
+          className="rounded-xl border border-white/10 bg-[#0b0f0f] px-2 py-1 text-xs text-neutral-300 outline-none focus:border-emerald-400/50"
         >
           <option value="date:desc">Newest first</option>
           <option value="date:asc">Oldest first</option>
@@ -62,7 +65,7 @@ export default function TransactionFilters({ value, onChange, onClear, active })
         {active && (
           <button
             onClick={onClear}
-            className="rounded-md px-2 py-1 text-xs font-medium text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+            className="rounded-xl px-2 py-1 text-xs font-medium text-neutral-500 hover:bg-white/5 hover:text-neutral-300"
           >
             Clear filters
           </button>

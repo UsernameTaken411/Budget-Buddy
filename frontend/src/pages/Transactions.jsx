@@ -5,6 +5,7 @@ import CsvImport from "../components/CsvImport.jsx";
 import TransactionFilters from "../components/TransactionFilters.jsx";
 import TransactionForm from "../components/TransactionForm.jsx";
 import TransactionList from "../components/TransactionList.jsx";
+import { DownloadIcon, PlusIcon, UploadIcon } from "../components/icons.jsx";
 
 const PAGE_SIZE = 25;
 
@@ -34,6 +35,16 @@ function buildQuery(f) {
 const isFiltered = (f) =>
   Boolean(f.q || f.category || f.start_date || f.end_date);
 
+// Client-side export of whatever page of transactions is currently loaded —
+// no new backend endpoint needed.
+function toCsv(items) {
+  const header = "date,description,category,amount";
+  const rows = items.map((t) =>
+    [t.date, `"${(t.description || "").replace(/"/g, '""')}"`, t.category, t.amount].join(",")
+  );
+  return [header, ...rows].join("\n");
+}
+
 export default function Transactions() {
   const [filters, setFilters] = useState(EMPTY_FILTERS);
   const [items, setItems] = useState([]);
@@ -42,6 +53,7 @@ export default function Transactions() {
   const [error, setError] = useState(null);
 
   const [editing, setEditing] = useState(null);
+  const [showAddForm, setShowAddForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
 
@@ -104,43 +116,94 @@ export default function Transactions() {
     }
   }
 
+  function handleExport() {
+    if (items.length === 0) return;
+    const blob = new Blob([toCsv(items)], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "transactions.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const pageStart = total === 0 ? 0 : filters.offset + 1;
   const pageEnd = Math.min(filters.offset + PAGE_SIZE, total);
   const pageNet = items.reduce((s, t) => s + t.amount, 0);
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold tracking-tight text-slate-900">
-          Transactions
-        </h1>
-        {!loading && !error && total > 0 && (
-          <p className="text-sm text-slate-500">
-            Showing {pageStart}–{pageEnd} of {total} · net on this page{" "}
-            <span
-              className={
-                pageNet < 0 ? "font-medium text-slate-900" : "font-medium text-green-600"
-              }
-            >
-              {formatAmount(pageNet)}
-            </span>
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="text-sm text-neutral-400">Money log</p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-white sm:text-3xl">
+            Transactions
+          </h1>
+          <p className="mt-1 text-sm text-neutral-400">
+            Review every expense and income entry in one place.
           </p>
-        )}
+        </div>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            onClick={() => document.getElementById("csv-file-input")?.click()}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
+          >
+            <UploadIcon className="h-4 w-4" />
+            Import CSV
+          </button>
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
+          >
+            <DownloadIcon className="h-4 w-4" />
+            Export
+          </button>
+          <button
+            onClick={() => {
+              setEditing(null);
+              setShowAddForm((v) => !v);
+            }}
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-neutral-950 hover:bg-emerald-300"
+          >
+            <PlusIcon className="h-4 w-4" />
+            Add
+          </button>
+        </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        {editing ? (
+      <CsvImport onImported={load} />
+
+      {!loading && !error && total > 0 && (
+        <p className="text-sm text-neutral-500">
+          Showing {pageStart}–{pageEnd} of {total} · net on this page{" "}
+          <span
+            className={
+              pageNet < 0 ? "font-medium text-neutral-200" : "font-medium text-emerald-400"
+            }
+          >
+            {formatAmount(pageNet)}
+          </span>
+        </p>
+      )}
+
+      {editing ? (
+        <TransactionForm
+          initial={editing}
+          onSubmit={handleUpdate}
+          onCancel={() => setEditing(null)}
+          busy={saving}
+        />
+      ) : (
+        showAddForm && (
           <TransactionForm
-            initial={editing}
-            onSubmit={handleUpdate}
-            onCancel={() => setEditing(null)}
+            onSubmit={async (payload) => {
+              await handleCreate(payload);
+              setShowAddForm(false);
+            }}
             busy={saving}
           />
-        ) : (
-          <TransactionForm onSubmit={handleCreate} busy={saving} />
-        )}
-        <CsvImport onImported={load} />
-      </div>
+        )
+      )}
 
       <TransactionFilters
         value={filters}
@@ -156,7 +219,10 @@ export default function Transactions() {
         filtered={isFiltered(filters)}
         onRetry={load}
         onClearFilters={() => setFilters(EMPTY_FILTERS)}
-        onEdit={setEditing}
+        onEdit={(t) => {
+          setShowAddForm(false);
+          setEditing(t);
+        }}
         onDelete={handleDelete}
         deletingId={deletingId}
       />
@@ -171,11 +237,11 @@ export default function Transactions() {
                 offset: Math.max(0, f.offset - PAGE_SIZE),
               }))
             }
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+            className="rounded-xl border border-white/10 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:bg-white/5 disabled:opacity-40"
           >
             Previous
           </button>
-          <span className="text-xs text-slate-500">
+          <span className="text-xs text-neutral-500">
             Page {Math.floor(filters.offset / PAGE_SIZE) + 1} of{" "}
             {Math.ceil(total / PAGE_SIZE)}
           </span>
@@ -184,7 +250,7 @@ export default function Transactions() {
             onClick={() =>
               setFilters((f) => ({ ...f, offset: f.offset + PAGE_SIZE }))
             }
-            className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+            className="rounded-xl border border-white/10 px-3 py-1.5 text-sm font-medium text-neutral-300 hover:bg-white/5 disabled:opacity-40"
           >
             Next
           </button>
