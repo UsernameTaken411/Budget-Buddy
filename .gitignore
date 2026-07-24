@@ -1,0 +1,26 @@
+# env — never commit these
+.env
+.env.local
+.env.*.local
+
+# shared secrets docs — contain live API keys, must never be committed.
+# Delete these from the working folder once you've copied the values into
+# backend/.env; they shouldn't live in the repo at all, ignored or not.
+SHARED*.MD
+SHARED*.md
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# node
+node_modules/
+dist/
+*.log
+
+# os / editor
+.DS_Store
+.vscode/
+.idea/

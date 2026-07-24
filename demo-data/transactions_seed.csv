@@ -1,0 +1,238 @@
+date,description,amount,category
+2026-03-01,foodpanda order,-19.9,food
+2026-03-01,Giant Tampines,-57.86,groceries
+2026-03-01,Shopee order,-104.69,shopping
+2026-03-03,Gojek ride,-16.81,transport
+2026-03-03,Guardian Pharmacy,-24.43,health
+2026-03-04,SimplyGo MRT top-up,-37.46,transport
+2026-03-05,NTUC FairPrice Clementi,-55.26,groceries
+2026-03-06,Steam purchase,-24.6,entertainment
+2026-03-07,Gojek ride,-20.15,transport
+2026-03-10,McDonald's Orchard,-13.08,food
+2026-03-10,Ya Kun Kaya Toast,-7.36,food
+2026-03-11,Starbucks Raffles,-7.37,food
+2026-03-12,Ya Kun Kaya Toast,-9.03,food
+2026-03-12,Shell petrol,-76.95,transport
+2026-03-12,Udemy course,-31.1,education
+2026-03-13,Din Tai Fung,-47.72,food
+2026-03-13,ComfortDelGro taxi,-23.3,transport
+2026-03-13,Decathlon,-93.56,shopping
+2026-03-14,Tim Ho Wan,-32.33,food
+2026-03-14,Sheng Siong,-52.7,groceries
+2026-03-14,Gojek ride,-13.33,transport
+2026-03-14,Shopee order,-93.2,shopping
+2026-03-14,Spotify Premium,-11.98,entertainment
+2026-03-16,NTUC FairPrice Clementi,-49.97,groceries
+2026-03-17,Ya Kun Kaya Toast,-10.69,food
+2026-03-18,Ya Kun Kaya Toast,-6.1,food
+2026-03-19,Gojek ride,-19.7,transport
+2026-03-19,Watsons,-47.44,health
+2026-03-20,Hawker Chan,-7.58,food
+2026-03-20,NTUC FairPrice Clementi,-45.04,groceries
+2026-03-20,Income insurance premium,-120.0,bills
+2026-03-21,Starbucks Raffles,-7.26,food
+2026-03-22,Kopitiam Toa Payoh,-6.2,food
+2026-03-22,Ya Kun Kaya Toast,-11.22,food
+2026-03-22,Cold Storage Holland V,-111.05,groceries
+2026-03-22,Grab ride,-13.68,transport
+2026-03-22,SimplyGo MRT top-up,-38.17,transport
+2026-03-22,IKEA Alexandra,-96.66,shopping
+2026-03-22,Income insurance premium,-120.0,bills
+2026-03-23,Kopitiam Toa Payoh,-7.78,food
+2026-03-23,Singtel mobile,-42.0,bills
+2026-03-24,McDonald's Orchard,-11.69,food
+2026-03-24,Grab ride,-14.26,transport
+2026-03-24,Netflix,-19.98,entertainment
+2026-03-25,ACME PTE LTD SALARY,4200.0,income
+2026-03-25,Kopitiam Toa Payoh,-5.7,food
+2026-03-26,Kopitiam Toa Payoh,-5.21,food
+2026-03-26,Grab ride,-13.03,transport
+2026-03-27,Fund transfer own account,-500.0,transfer
+2026-03-27,Hawker Chan,-9.03,food
+2026-03-27,Shell petrol,-92.06,transport
+2026-03-28,Kopitiam Toa Payoh,-5.74,food
+2026-03-28,Starbucks Raffles,-7.07,food
+2026-03-28,Gojek ride,-13.69,transport
+2026-03-29,Ya Kun Kaya Toast,-9.12,food
+2026-03-30,Hawker Chan,-9.28,food
+2026-03-31,Shell petrol,-82.36,transport
+2026-03-31,Income insurance premium,-120.0,bills
+2026-04-01,Steam purchase,-17.47,entertainment
+2026-04-02,Kopitiam Toa Payoh,-8.8,food
+2026-04-02,Ya Kun Kaya Toast,-9.64,food
+2026-04-03,Ya Kun Kaya Toast,-8.17,food
+2026-04-03,Starbucks Raffles,-8.96,food
+2026-04-03,Shell petrol,-87.72,transport
+2026-04-04,Tim Ho Wan,-28.17,food
+2026-04-04,Sheng Siong,-58.37,groceries
+2026-04-04,SimplyGo MRT top-up,-38.52,transport
+2026-04-06,McDonald's Orchard,-14.2,food
+2026-04-06,NTUC FairPrice Clementi,-58.32,groceries
+2026-04-06,Uniqlo Bugis,-96.06,shopping
+2026-04-07,SP Group utilities,-125.0,bills
+2026-04-08,Kopitiam Toa Payoh,-5.69,food
+2026-04-08,Sheng Siong,-34.23,groceries
+2026-04-08,Grab ride,-13.53,transport
+2026-04-09,Din Tai Fung,-45.19,food
+2026-04-09,SimplyGo MRT top-up,-33.44,transport
+2026-04-10,Freelance payment,528.98,income
+2026-04-10,Din Tai Fung,-33.17,food
+2026-04-10,Starbucks Raffles,-7.27,food
+2026-04-11,Starbucks Raffles,-10.79,food
+2026-04-11,Starbucks Raffles,-7.09,food
+2026-04-11,Uniqlo Bugis,-80.53,shopping
+2026-04-11,Coursera subscription,-28.0,education
+2026-04-14,Starbucks Raffles,-10.77,food
+2026-04-14,SimplyGo MRT top-up,-35.21,transport
+2026-04-15,SimplyGo MRT top-up,-24.09,transport
+2026-04-15,Grab ride,-19.55,transport
+2026-04-16,Cold Storage Holland V,-49.55,groceries
+2026-04-16,Polyclinic consult,-16.26,health
+2026-04-18,Grab ride,-19.31,transport
+2026-04-19,Starbucks Raffles,-8.24,food
+2026-04-19,Shell petrol,-87.34,transport
+2026-04-19,Income insurance premium,-120.0,bills
+2026-04-20,Starbucks Raffles,-9.44,food
+2026-04-20,Lazada order,-146.6,shopping
+2026-04-20,Town Council S&CC,-78.0,bills
+2026-04-21,Tim Ho Wan,-32.4,food
+2026-04-21,Steam purchase,-39.87,entertainment
+2026-04-22,Starbucks Raffles,-10.27,food
+2026-04-23,Starbucks Raffles,-7.32,food
+2026-04-23,SimplyGo MRT top-up,-31.34,transport
+2026-04-24,Kopitiam Toa Payoh,-7.94,food
+2026-04-24,Din Tai Fung,-46.24,food
+2026-04-24,Starbucks Raffles,-8.57,food
+2026-04-25,ACME PTE LTD SALARY,4200.0,income
+2026-04-25,Spotify Premium,-11.98,entertainment
+2026-04-26,Giant Tampines,-44.22,groceries
+2026-04-26,SimplyGo MRT top-up,-34.5,transport
+2026-04-27,Fund transfer own account,-500.0,transfer
+2026-04-27,SimplyGo MRT top-up,-28.97,transport
+2026-04-27,SimplyGo MRT top-up,-20.84,transport
+2026-04-28,Giant Tampines,-40.86,groceries
+2026-04-28,Singtel mobile,-42.0,bills
+2026-04-29,Grab ride,-15.43,transport
+2026-04-29,Polyclinic consult,-26.65,health
+2026-04-30,Kopitiam Toa Payoh,-8.12,food
+2026-04-30,Decathlon,-84.34,shopping
+2026-05-01,McDonald's Orchard,-8.66,food
+2026-05-01,Sheng Siong,-65.46,groceries
+2026-05-02,foodpanda order,-22.41,food
+2026-05-02,NTUC FairPrice Clementi,-68.63,groceries
+2026-05-03,Freelance payment,871.76,income
+2026-05-03,Shell petrol,-92.08,transport
+2026-05-03,Singtel mobile,-42.0,bills
+2026-05-04,foodpanda order,-28.13,food
+2026-05-04,Din Tai Fung,-37.24,food
+2026-05-04,SimplyGo MRT top-up,-23.9,transport
+2026-05-05,Starbucks Raffles,-6.51,food
+2026-05-05,Dental checkup,-78.79,health
+2026-05-05,Scoot flight booking,-211.14,travel
+2026-05-07,Sheng Siong,-30.63,groceries
+2026-05-08,Ya Kun Kaya Toast,-8.36,food
+2026-05-08,SP Group utilities,-122.84,bills
+2026-05-08,Spotify Premium,-11.98,entertainment
+2026-05-08,Agoda hotel,-354.34,travel
+2026-05-09,Gojek ride,-17.01,transport
+2026-05-10,foodpanda order,-22.19,food
+2026-05-10,Starbucks Raffles,-7.49,food
+2026-05-10,Starbucks Raffles,-6.79,food
+2026-05-10,NTUC FairPrice Clementi,-82.94,groceries
+2026-05-10,NTUC FairPrice Clementi,-30.38,groceries
+2026-05-11,foodpanda order,-21.46,food
+2026-05-11,Decathlon,-48.79,shopping
+2026-05-12,Kopitiam Toa Payoh,-5.28,food
+2026-05-12,Ya Kun Kaya Toast,-7.11,food
+2026-05-13,Uniqlo Bugis,-77.68,shopping
+2026-05-14,Din Tai Fung,-47.78,food
+2026-05-15,Starbucks Raffles,-8.31,food
+2026-05-15,Income insurance premium,-120.0,bills
+2026-05-16,McDonald's Orchard,-12.0,food
+2026-05-16,Ya Kun Kaya Toast,-7.89,food
+2026-05-16,Lazada order,-40.73,shopping
+2026-05-17,Starbucks Raffles,-7.47,food
+2026-05-17,McDonald's Orchard,-15.94,food
+2026-05-17,Cold Storage Holland V,-89.1,groceries
+2026-05-19,McDonald's Orchard,-10.68,food
+2026-05-19,Golden Village cinema,-15.71,entertainment
+2026-05-20,Gojek ride,-20.83,transport
+2026-05-21,Gojek ride,-13.54,transport
+2026-05-22,Town Council S&CC,-78.0,bills
+2026-05-23,Shell petrol,-75.17,transport
+2026-05-24,Shell petrol,-82.39,transport
+2026-05-25,ACME PTE LTD SALARY,4200.0,income
+2026-05-25,Din Tai Fung,-35.32,food
+2026-05-25,Guardian Pharmacy,-36.83,health
+2026-05-26,Gojek ride,-19.19,transport
+2026-05-26,Grab ride,-25.84,transport
+2026-05-26,Udemy course,-33.33,education
+2026-05-27,Fund transfer own account,-500.0,transfer
+2026-05-27,Din Tai Fung,-34.18,food
+2026-05-27,Ya Kun Kaya Toast,-10.21,food
+2026-05-27,Shell petrol,-84.11,transport
+2026-05-28,Gojek ride,-17.66,transport
+2026-05-28,ComfortDelGro taxi,-14.88,transport
+2026-05-28,Agoda hotel,-337.46,travel
+2026-05-29,Grab ride,-11.23,transport
+2026-05-31,Shell petrol,-60.14,transport
+2026-05-31,IKEA Alexandra,-170.52,shopping
+2026-05-31,Steam purchase,-52.83,entertainment
+2026-06-01,Din Tai Fung,-43.42,food
+2026-06-01,Din Tai Fung,-30.51,food
+2026-06-01,foodpanda order,-32.06,food
+2026-06-01,Sheng Siong,-44.79,groceries
+2026-06-02,Tim Ho Wan,-21.22,food
+2026-06-03,Hawker Chan,-11.14,food
+2026-06-03,Giant Tampines,-59.5,groceries
+2026-06-04,Polyclinic consult,-21.6,health
+2026-06-05,Shell petrol,-85.04,transport
+2026-06-05,Gojek ride,-22.11,transport
+2026-06-05,Shopee order,-41.49,shopping
+2026-06-05,Shopee order,-125.51,shopping
+2026-06-06,Kopitiam Toa Payoh,-7.91,food
+2026-06-07,Income insurance premium,-120.0,bills
+2026-06-08,Town Council S&CC,-78.0,bills
+2026-06-09,Giant Tampines,-37.17,groceries
+2026-06-09,Grab ride,-19.35,transport
+2026-06-09,Gojek ride,-19.25,transport
+2026-06-10,Cold Storage Holland V,-99.07,groceries
+2026-06-10,Shell petrol,-86.39,transport
+2026-06-11,Din Tai Fung,-47.04,food
+2026-06-13,Starbucks Raffles,-8.68,food
+2026-06-13,Gojek ride,-22.9,transport
+2026-06-13,Golden Village cinema,-13.9,entertainment
+2026-06-14,Din Tai Fung,-43.11,food
+2026-06-15,McDonald's Orchard,-12.12,food
+2026-06-15,Hawker Chan,-9.55,food
+2026-06-15,Shell petrol,-85.74,transport
+2026-06-16,Din Tai Fung,-46.71,food
+2026-06-17,SP Group utilities,-87.06,bills
+2026-06-18,Starbucks Raffles,-7.55,food
+2026-06-18,Shell petrol,-61.52,transport
+2026-06-18,ComfortDelGro taxi,-17.19,transport
+2026-06-18,IKEA Alexandra,-165.47,shopping
+2026-06-18,Popular Bookstore,-62.99,education
+2026-06-19,Ya Kun Kaya Toast,-11.52,food
+2026-06-19,foodpanda order,-26.34,food
+2026-06-19,ComfortDelGro taxi,-24.18,transport
+2026-06-19,Shopee order,-19.39,shopping
+2026-06-20,Kopitiam Toa Payoh,-6.47,food
+2026-06-22,Din Tai Fung,-44.08,food
+2026-06-22,Gojek ride,-14.8,transport
+2026-06-22,Singtel mobile,-42.0,bills
+2026-06-23,Kopitiam Toa Payoh,-5.5,food
+2026-06-23,Ya Kun Kaya Toast,-9.89,food
+2026-06-23,SimplyGo MRT top-up,-32.65,transport
+2026-06-24,Spotify Premium,-11.98,entertainment
+2026-06-25,ACME PTE LTD SALARY,4200.0,income
+2026-06-25,NTUC FairPrice Clementi,-39.42,groceries
+2026-06-26,foodpanda order,-15.22,food
+2026-06-26,Gojek ride,-20.87,transport
+2026-06-26,Watsons,-42.03,health
+2026-06-27,Fund transfer own account,-500.0,transfer
+2026-06-27,Starbucks Raffles,-6.73,food
+2026-06-27,Giant Tampines,-64.58,groceries
+2026-06-27,Steam purchase,-47.79,entertainment
+2026-06-28,Hawker Chan,-11.15,food
+2026-06-28,ComfortDelGro taxi,-27.16,transport
