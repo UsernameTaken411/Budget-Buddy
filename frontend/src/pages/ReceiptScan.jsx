@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { apiFetch, ApiError } from "../services/api";
 import { CATEGORIES, CATEGORY_LABELS, formatAmount } from "../services/categories";
 import { CameraIcon, ScanFrameIcon, ShieldCheckIcon } from "../components/icons.jsx";
+import DatePicker from "../components/DatePicker.jsx";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const RECEIPT_CATEGORIES = CATEGORIES.filter((c) => c !== "income" && c !== "transfer");
@@ -324,10 +325,9 @@ export default function ReceiptScan() {
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
                   <span className="font-medium text-neutral-400">Date</span>
-                  <input
-                    type="date"
+                  <DatePicker
                     value={result.date ?? ""}
-                    onChange={(e) => setResult({ ...result, date: e.target.value || null })}
+                    onChange={(v) => setResult({ ...result, date: v || null })}
                     className={inputClass}
                   />
                 </label>

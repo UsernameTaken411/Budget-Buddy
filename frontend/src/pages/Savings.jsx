@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../services/api";
 import { formatAmount } from "../services/categories";
 import { ExclamationCircleIcon, PlusIcon, ShieldCheckIcon, TrashIcon } from "../components/icons.jsx";
+import DatePicker from "../components/DatePicker.jsx";
 
 export default function Savings() {
   const [goals, setGoals] = useState(null);
@@ -156,10 +157,10 @@ export default function Savings() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-400">Target date (optional)</label>
-            <input
-              type="date"
+            <DatePicker
               value={targetDate}
-              onChange={(e) => setTargetDate(e.target.value)}
+              onChange={setTargetDate}
+              placeholder="Optional"
               className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white"
             />
           </div>

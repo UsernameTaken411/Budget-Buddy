@@ -1,4 +1,5 @@
 import { CATEGORIES, CATEGORY_LABELS } from "../services/categories.js";
+import DatePicker from "./DatePicker.jsx";
 
 const fieldClass =
   "rounded-xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-emerald-400/50";
@@ -32,16 +33,16 @@ export default function TransactionFilters({ value, onChange, onClear, active })
           ))}
         </select>
 
-        <input
-          type="date"
+        <DatePicker
           value={value.start_date}
-          onChange={(e) => set({ start_date: e.target.value })}
+          onChange={(v) => set({ start_date: v })}
+          placeholder="Start date"
           className={fieldClass}
         />
-        <input
-          type="date"
+        <DatePicker
           value={value.end_date}
-          onChange={(e) => set({ end_date: e.target.value })}
+          onChange={(v) => set({ end_date: v })}
+          placeholder="End date"
           className={fieldClass}
         />
       </div>

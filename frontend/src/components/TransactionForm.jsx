@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { CATEGORIES, CATEGORY_LABELS } from "../services/categories.js";
+import DatePicker from "./DatePicker.jsx";
 
 // The UI takes a POSITIVE magnitude plus an expense/income toggle, and converts
 // to the signed value the API expects (SCHEMA.md §1). Users think in
@@ -115,13 +116,7 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
           <label className="mb-1 block text-xs font-medium text-neutral-400">
             Date
           </label>
-          <input
-            type="date"
-            required
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            className={inputClass}
-          />
+          <DatePicker value={date} onChange={setDate} className={inputClass} />
         </div>
 
         <div>

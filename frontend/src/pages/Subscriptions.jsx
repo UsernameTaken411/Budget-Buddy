@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../services/api";
 import { formatAmount } from "../services/categories";
 import { BellIcon, ExclamationCircleIcon, PlusIcon, TrashIcon } from "../components/icons.jsx";
+import DatePicker from "../components/DatePicker.jsx";
 
 const CYCLES = ["weekly", "monthly", "quarterly", "yearly"];
 
@@ -198,10 +199,9 @@ export default function Subscriptions() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-400">Next billing date</label>
-            <input
-              type="date"
+            <DatePicker
               value={nextDate}
-              onChange={(e) => setNextDate(e.target.value)}
+              onChange={setNextDate}
               className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white"
             />
           </div>
