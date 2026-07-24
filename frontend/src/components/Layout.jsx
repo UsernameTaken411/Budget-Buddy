@@ -9,7 +9,8 @@ const LINKS = [
   { to: "/savings", label: "Savings" },
   { to: "/subscriptions", label: "Subscriptions" },
   { to: "/receipts/scan", label: "Scan receipt" },
-  // { to: "/dashboard", label: "Dashboard" },  C
+  { to: "/dashboard", label: "Dashboard" },
+  { to: "/chat", label: "Ask AI" },
   { to: "/profile", label: "Profile" },
 ];
 

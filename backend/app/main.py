@@ -22,7 +22,16 @@ from fastapi import FastAPI, Request  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from fastapi.responses import JSONResponse  # noqa: E402
 
-from .routers import auth, budgets, profile, receipts, savings, subscriptions, transactions  # noqa: E402
+from .routers import (  # noqa: E402
+    auth,
+    budgets,
+    insights,
+    profile,
+    receipts,
+    savings,
+    subscriptions,
+    transactions,
+)
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -89,7 +98,7 @@ app.include_router(budgets.router, prefix="/api")
 app.include_router(savings.router, prefix="/api")
 app.include_router(subscriptions.router, prefix="/api")
 app.include_router(receipts.router, prefix="/api")
-# app.include_router(insights.router, prefix="/api")
+app.include_router(insights.router, prefix="/api")
 
 
 @app.get("/api/health")
