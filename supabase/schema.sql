@@ -1,18 +1,4 @@
--- Budget Buddy — full schema. Run this once in the Supabase SQL Editor.
---
--- Covers all three verticals per SCHEMA.md (the locked integration contract):
---   A: transactions, profiles
---   B: budgets, savings_goals, subscriptions
---   C: read-only consumer, no tables of its own
---
--- Safe to run on a brand-new empty project OR one that already has an
--- older/mismatched version of these tables — it drops each table first
--- (if it exists) before recreating it, so there's no drift between what's
--- in the database and what this file says the schema should be.
---
--- This DELETES any existing rows in these five tables. Fine for hackathon/
--- dev data; do not run this against anything with real user data without
--- backing it up first.
+
 
 drop view if exists public.budget_progress cascade;
 drop view if exists public.savings_goal_progress cascade;
