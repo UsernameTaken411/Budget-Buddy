@@ -38,3 +38,28 @@ export interface ReceiptExtraction {
   notes: string;
   recommended_budget_category?: string | null;
 }
+
+export interface Transaction {
+  id: string;
+  merchant: string;
+  amount: number;
+  transaction_date: string | null;
+  category: string;
+  transaction_type: "income" | "expense";
+  currency: string;
+  notes?: string;
+  source?: string;
+}
+
+export interface Profile {
+  id?: string;
+  full_name: string;
+  email: string;
+  currency: string;
+}
+
+export interface AuthSession {
+  access_token: string;
+  refresh_token: string;
+  user: { id: string; email: string };
+}

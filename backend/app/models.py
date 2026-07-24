@@ -162,3 +162,33 @@ class TransactionCreate(BaseModel):
     transaction_type: Literal["expense"] = "expense"
     currency: str = Field(default="SGD", min_length=3, max_length=3)
     notes: str = Field(default="", max_length=500)
+
+
+class TransactionUpdate(BaseModel):
+    merchant: str | None = Field(None, min_length=1, max_length=120)
+    amount: Decimal | None = Field(None, gt=0, max_digits=12, decimal_places=2)
+    transaction_date: date | None = None
+    category: str | None = Field(None, min_length=1, max_length=80)
+    transaction_type: Literal["income", "expense"] | None = None
+    currency: str | None = Field(None, min_length=3, max_length=3)
+    notes: str | None = Field(None, max_length=500)
+
+
+class SignupBody(BaseModel):
+    email: str
+    password: str = Field(min_length=6)
+    display_name: str = Field(default="", max_length=120)
+
+
+class LoginBody(BaseModel):
+    email: str
+    password: str
+
+
+class RefreshBody(BaseModel):
+    refresh_token: str
+
+
+class ProfileUpdate(BaseModel):
+    display_name: str | None = Field(None, max_length=120)
+    currency: str | None = Field(None, min_length=3, max_length=3)

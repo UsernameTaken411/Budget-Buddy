@@ -3,6 +3,14 @@
 
 create extension if not exists "pgcrypto";
 
+create table if not exists public.profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null default '',
+  currency char(3) not null default 'SGD',
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create table if not exists public.transactions (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null default auth.uid() references auth.users(id) on delete cascade,
@@ -72,6 +80,7 @@ alter table public.budgets enable row level security;
 alter table public.transactions enable row level security;
 alter table public.savings_goals enable row level security;
 alter table public.subscriptions enable row level security;
+alter table public.profiles enable row level security;
 
 drop policy if exists "Users manage their own budgets" on public.budgets;
 drop policy if exists "Users manage their own transactions" on public.transactions;
@@ -86,6 +95,9 @@ create policy "Users manage their own savings goals" on public.savings_goals
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "Users manage their own subscriptions" on public.subscriptions
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "Users manage their own profile" on public.profiles;
+create policy "Users manage their own profile" on public.profiles
+  for all using (auth.uid() = id) with check (auth.uid() = id);
 
 -- When Person A's transactions table exists, budget progress uses live expenses.
 -- Until then the view remains usable with zero spent, so this branch runs alone.

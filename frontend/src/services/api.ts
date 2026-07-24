@@ -5,6 +5,11 @@ const API_URL =
 export class ApiError extends Error {}
 
 const demoSeed = {
+  transactions: [
+    { id: "demo-tx-1", merchant: "Salary", amount: 4200, transaction_date: nextDate(-12), category: "Income", transaction_type: "income", currency: "SGD", source: "manual" },
+    { id: "demo-tx-2", merchant: "FairPrice Finest", amount: 68.45, transaction_date: nextDate(-2), category: "Groceries", transaction_type: "expense", currency: "SGD", source: "receipt" },
+    { id: "demo-tx-3", merchant: "KFC", amount: 14.9, transaction_date: nextDate(-1), category: "Dining", transaction_type: "expense", currency: "SGD", source: "receipt" },
+  ],
   budgets: [
     { id: "demo-budget-1", category: "Dining", amount: 450, spent: 318.4, remaining: 131.6, period: "monthly" },
     { id: "demo-budget-2", category: "Transport", amount: 220, spent: 96.8, remaining: 123.2, period: "monthly" },
@@ -27,6 +32,34 @@ function nextDate(days: number) {
 }
 
 function demoData<T>(path: string, options: RequestInit): T {
+  const method = options.method ?? "GET";
+  if (path === "/insights/ask") {
+    const question = String(options.body ? JSON.parse(String(options.body)).question : "").toLowerCase();
+    const transactions = readDemo("transactions") as Array<{ transaction_type: string; amount: number; category: string }>;
+    const expenses = transactions.filter((t: { transaction_type: string }) => t.transaction_type === "expense");
+    const income = transactions.filter((t: { transaction_type: string }) => t.transaction_type === "income").reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0);
+    const spent = expenses.reduce((sum: number, t: { amount: number }) => sum + Number(t.amount), 0);
+    const categories: Record<string, number> = {};
+    for (const transaction of expenses) categories[transaction.category] = (categories[transaction.category] ?? 0) + Number(transaction.amount);
+    const top = Object.entries(categories).sort((a, b) => b[1] - a[1])[0] ?? ["None", 0];
+    const answer = question.includes("category") || question.includes("most") || question.includes("largest")
+      ? `Your largest expense category is ${top[0]} at $${Number(top[1]).toFixed(2)}.`
+      : question.includes("balance") || question.includes("left") || question.includes("afford")
+        ? `Your recorded income is $${income.toFixed(2)}, expenses are $${spent.toFixed(2)}, leaving $${(income - spent).toFixed(2)}.`
+        : `You have recorded $${spent.toFixed(2)} in expenses across ${expenses.length} transactions.`;
+    return { answer } as T;
+  }
+  if (path.startsWith("/transactions")) {
+    const records = readDemo("transactions");
+    const id = path.split("/")[2];
+    const payload = options.body && typeof options.body === "string" ? JSON.parse(options.body) : {};
+    if (method === "GET") return records as T;
+    if (method === "DELETE") { writeDemo("transactions", records.filter((item: { id: string }) => item.id !== id)); return undefined as T; }
+    if (method === "POST") {
+      const item = { ...payload, id: crypto.randomUUID(), source: payload.source ?? "manual" };
+      records.unshift(item); writeDemo("transactions", records); return item as T;
+    }
+  }
   if (path === "/receipts" && (options.method ?? "GET") === "GET") {
     return JSON.parse(
       localStorage.getItem("budget_buddy_demo_transactions") ?? "[]",
@@ -79,7 +112,6 @@ function demoData<T>(path: string, options: RequestInit): T {
       : "subscriptions";
   const storageKey = `budget_buddy_demo_${domain}`;
   const records = JSON.parse(localStorage.getItem(storageKey) ?? JSON.stringify(demoSeed[domain]));
-  const method = options.method ?? "GET";
   const id = path.split("/")[2];
   const payload = options.body ? JSON.parse(String(options.body)) : {};
 
@@ -116,6 +148,14 @@ function demoData<T>(path: string, options: RequestInit): T {
   return undefined as T;
 }
 
+function readDemo(domain: keyof typeof demoSeed) {
+  return JSON.parse(localStorage.getItem(`budget_buddy_demo_${domain}`) ?? JSON.stringify(demoSeed[domain]));
+}
+
+function writeDemo(domain: keyof typeof demoSeed, records: unknown) {
+  localStorage.setItem(`budget_buddy_demo_${domain}`, JSON.stringify(records));
+}
+
 function monthlyCost(amount: number, cycle: string) {
   if (cycle === "weekly") return amount * 52 / 12;
   if (cycle === "quarterly") return amount / 3;
@@ -127,6 +167,20 @@ export const isPreviewMode = () => !localStorage.getItem("budget_buddy_access_to
 
 export async function upload<T>(path: string, formData: FormData): Promise<T> {
   const token = localStorage.getItem("budget_buddy_access_token");
+  if (!token && path === "/transactions/import") {
+    const source = formData.get("file");
+    if (!(source instanceof File)) throw new ApiError("Choose a CSV file first.");
+    const rows = (await source.text()).split(/\r?\n/).filter(Boolean);
+    const headers = rows.shift()?.split(",").map(value => value.replaceAll('"', "").trim().toLowerCase()) ?? [];
+    const records = readDemo("transactions");
+    for (const row of rows) {
+      const values = row.split(",").map(value => value.replaceAll('"', "").trim());
+      const record = Object.fromEntries(headers.map((header, index) => [header, values[index]]));
+      records.unshift({ id: crypto.randomUUID(), merchant: record.merchant || record.description || "Imported", amount: Number(record.amount), transaction_date: record.date || record.transaction_date || null, category: record.category || "Other", transaction_type: record.type === "income" ? "income" : "expense", currency: record.currency || "SGD", source: "csv" });
+    }
+    writeDemo("transactions", records);
+    return { imported: rows.length } as T;
+  }
   if (!token && path !== "/receipts/scan") {
     throw new ApiError("Sign in is required for real receipt scanning. Preview mode no longer returns a fake receipt result.");
     return {

@@ -1,12 +1,16 @@
-import { Camera, Cloud, Landmark, PiggyBank, Receipt, Sparkles, WalletCards, WifiOff } from "lucide-react";
+import { Bot, Camera, CircleUserRound, Cloud, LayoutDashboard, Landmark, List, PiggyBank, Receipt, Sparkles, WalletCards, WifiOff } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 import { isPreviewMode } from "../services/api";
 
 const links = [
+  { to: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { to: "/transactions", label: "Transactions", icon: List },
   { to: "/receipts", label: "Scan receipt", icon: Camera },
   { to: "/budgets", label: "Budgets", icon: WalletCards },
   { to: "/savings", label: "Savings", icon: PiggyBank },
   { to: "/subscriptions", label: "Subscriptions", icon: Receipt },
+  { to: "/insights", label: "Insights", icon: Bot },
+  { to: "/profile", label: "Profile", icon: CircleUserRound },
 ];
 
 export function Layout() {
@@ -29,7 +33,7 @@ export function Layout() {
           <div><p className="display font-extrabold">Budget Buddy</p><p className="text-xs text-slate-500">Financial clarity, daily.</p></div>
         </div>
         <p className="mb-2 mt-9 px-3 text-[10px] font-bold uppercase tracking-[.22em] text-slate-600">Plan & grow</p>
-        <nav className="space-y-1">
+        <nav className="space-y-1 overflow-y-auto">
           {links.map(({ to, label, icon: Icon }) => (
             <NavLink key={to} to={to} className={({ isActive }) => `flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold transition ${isActive ? "bg-emerald-400/10 text-emerald-300" : "text-slate-500 hover:bg-white/[0.04] hover:text-slate-200"}`}>
               <Icon size={17} />{label}
@@ -44,8 +48,8 @@ export function Layout() {
         <div className="mt-4"><Status preview={preview} /></div>
       </aside>
       <main className="relative z-10 mx-auto max-w-6xl px-5 pb-28 pt-8 lg:ml-64 lg:px-10 lg:pb-12 lg:pt-10"><Outlet /></main>
-      <nav className="fixed inset-x-3 bottom-3 z-40 flex justify-around rounded-2xl border border-white/10 bg-[#111715]/95 p-2 shadow-2xl backdrop-blur-xl lg:hidden">
-        {links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => `flex min-w-0 flex-1 flex-col items-center gap-1 rounded-xl px-1 py-2 text-[10px] font-semibold ${isActive ? "bg-emerald-400/10 text-emerald-300" : "text-slate-500"}`}><Icon size={18} />{label}</NavLink>)}
+      <nav className="fixed inset-x-3 bottom-3 z-40 flex gap-1 overflow-x-auto rounded-2xl border border-white/10 bg-[#111715]/95 p-2 shadow-2xl backdrop-blur-xl lg:hidden">
+        {links.map(({ to, label, icon: Icon }) => <NavLink key={to} to={to} className={({ isActive }) => `flex min-w-[72px] flex-1 flex-col items-center gap-1 rounded-xl px-2 py-2 text-[10px] font-semibold ${isActive ? "bg-emerald-400/10 text-emerald-300" : "text-slate-500"}`}><Icon size={18} />{label}</NavLink>)}
       </nav>
     </div>
   );
