@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import budgets
+from .routers import budgets, savings
 
 app = FastAPI(title="Budget Buddy API", version="0.1.0")
 
@@ -20,6 +20,7 @@ app.add_middleware(
 )
 
 app.include_router(budgets.router, prefix="/api")
+app.include_router(savings.router, prefix="/api")
 
 
 @app.get("/health")
