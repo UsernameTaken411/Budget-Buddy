@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import budgets, savings, subscriptions
+from .routers import budgets, receipts, savings, subscriptions
 
 app = FastAPI(title="Budget Buddy API", version="0.1.0")
 
@@ -13,7 +13,7 @@ except Exception:
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[origin],
+    allow_origins=[origin, "http://10.41.114.209:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -22,6 +22,7 @@ app.add_middleware(
 app.include_router(budgets.router, prefix="/api")
 app.include_router(savings.router, prefix="/api")
 app.include_router(subscriptions.router, prefix="/api")
+app.include_router(receipts.router, prefix="/api")
 
 
 @app.get("/health")

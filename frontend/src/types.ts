@@ -31,9 +31,10 @@ export interface Subscription {
 export interface ReceiptExtraction {
   merchant: string;
   amount: number;
-  transaction_date: string;
-  category: "Food" | "Transport" | "Shopping" | "Groceries" | "Entertainment" | "Health" | "Utilities" | "Travel" | "Education" | "Other";
+  transaction_date: string | null;
+  category: "Food" | "Transport" | "Shopping" | "Groceries" | "Entertainment" | "Health" | "Housing" | "Utilities" | "Travel" | "Education" | "Other";
   currency: string;
   confidence: number;
   notes: string;
+  recommended_budget_category?: string | null;
 }

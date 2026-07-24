@@ -11,6 +11,11 @@ class SupabaseREST:
 
     def __init__(self, access_token: str):
         settings = get_settings()
+        if not settings.supabase_url or not settings.supabase_anon_key:
+            raise HTTPException(
+                status_code=503,
+                detail="Database saving is not configured. Add the Supabase settings.",
+            )
         self.base_url = f"{settings.supabase_url.rstrip('/')}/rest/v1"
         self.headers = {
             "apikey": settings.supabase_anon_key,

@@ -1,4 +1,6 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000/api";
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  `http://${window.location.hostname}:8001/api`;
 
 export class ApiError extends Error {}
 
@@ -25,6 +27,11 @@ function nextDate(days: number) {
 }
 
 function demoData<T>(path: string, options: RequestInit): T {
+  if (path === "/receipts" && (options.method ?? "GET") === "GET") {
+    return JSON.parse(
+      localStorage.getItem("budget_buddy_demo_transactions") ?? "[]",
+    ) as T;
+  }
   if (path === "/receipts/confirm") {
     const payload = options.body ? JSON.parse(String(options.body)) : {};
     const storageKey = "budget_buddy_demo_transactions";
@@ -32,6 +39,37 @@ function demoData<T>(path: string, options: RequestInit): T {
     const transaction = { ...payload, id: crypto.randomUUID(), source: "receipt" };
     records.unshift(transaction);
     localStorage.setItem(storageKey, JSON.stringify(records));
+
+    const budgetStorageKey = "budget_buddy_demo_budgets";
+    const budgets = JSON.parse(
+      localStorage.getItem(budgetStorageKey) ?? JSON.stringify(demoSeed.budgets),
+    );
+    const categoryAliases: Record<string, string[]> = {
+      Food: ["Food", "Dining"],
+      Groceries: ["Groceries", "Food", "Dining"],
+      Transport: ["Transport"],
+      Shopping: ["Shopping"],
+      Entertainment: ["Entertainment"],
+      Health: ["Health"],
+      Utilities: ["Utilities"],
+      Travel: ["Travel"],
+      Education: ["Education"],
+      Other: ["Other", "Shopping"],
+    };
+    const acceptedNames = categoryAliases[payload.category] ?? [payload.category];
+    const matchingBudget = budgets.find((budget: { category: string }) =>
+      acceptedNames.some(
+        category => category.toLowerCase() === budget.category.toLowerCase(),
+      ),
+    );
+    if (matchingBudget) {
+      matchingBudget.spent = Number(matchingBudget.spent) + Number(payload.amount);
+      matchingBudget.remaining = Math.max(
+        Number(matchingBudget.amount) - matchingBudget.spent,
+        0,
+      );
+      localStorage.setItem(budgetStorageKey, JSON.stringify(budgets));
+    }
     return transaction as T;
   }
   const domain = path.startsWith("/budgets")
@@ -89,8 +127,8 @@ export const isPreviewMode = () => !localStorage.getItem("budget_buddy_access_to
 
 export async function upload<T>(path: string, formData: FormData): Promise<T> {
   const token = localStorage.getItem("budget_buddy_access_token");
-  if (!token) {
-    await new Promise(resolve => window.setTimeout(resolve, 1200));
+  if (!token && path !== "/receipts/scan") {
+    throw new ApiError("Sign in is required for real receipt scanning. Preview mode no longer returns a fake receipt result.");
     return {
       merchant: "The Daily Table",
       amount: 24.8,
@@ -103,7 +141,7 @@ export async function upload<T>(path: string, formData: FormData): Promise<T> {
   }
   const response = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
     body: formData,
   });
   if (!response.ok) {

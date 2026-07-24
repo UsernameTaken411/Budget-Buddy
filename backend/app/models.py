@@ -71,6 +71,7 @@ ExpenseCategory = Literal[
     "Groceries",
     "Entertainment",
     "Health",
+    "Housing",
     "Utilities",
     "Travel",
     "Education",
@@ -81,18 +82,83 @@ ExpenseCategory = Literal[
 class ReceiptExtraction(BaseModel):
     merchant: str = Field(min_length=1, max_length=120)
     amount: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
-    transaction_date: date
-    category: ExpenseCategory
+    transaction_date: date | None = None
+    category: ExpenseCategory = "Other"
     currency: str = Field(default="SGD", min_length=3, max_length=3)
-    confidence: float = Field(ge=0, le=1)
+    confidence: float = Field(default=0.5, ge=0, le=1)
     notes: str = Field(default="", max_length=500)
+    recommended_budget_category: str | None = Field(default=None, max_length=80)
+
+    @field_validator("transaction_date", mode="before")
+    @classmethod
+    def normalize_missing_date(cls, value):
+        if value is None:
+            return None
+        if isinstance(value, str) and value.strip().lower() in {
+            "",
+            "n/a",
+            "na",
+            "none",
+            "null",
+            "not visible",
+            "not found",
+            "unknown",
+        }:
+            return None
+        return value
+
+    @field_validator("amount", mode="before")
+    @classmethod
+    def normalize_receipt_amount(cls, value):
+        if isinstance(value, str):
+            return value.upper().replace("SGD", "").replace("S$", "").replace("$", "").strip()
+        return value
+
+    @field_validator("currency", mode="before")
+    @classmethod
+    def normalize_receipt_currency(cls, value):
+        if not value:
+            return "SGD"
+        normalized = str(value).strip().upper()
+        if normalized in {"$", "S$", "SINGAPORE DOLLAR", "SINGAPORE DOLLARS"}:
+            return "SGD"
+        return normalized
+
+    @field_validator("category", mode="before")
+    @classmethod
+    def normalize_receipt_category(cls, value):
+        aliases = {
+            "grocery": "Groceries",
+            "supermarket": "Groceries",
+            "dining": "Food",
+            "restaurant": "Food",
+            "retail": "Shopping",
+            "medical": "Health",
+        }
+        if not value:
+            return "Other"
+        return aliases.get(str(value).strip().lower(), value)
+
+    @field_validator("confidence", mode="before")
+    @classmethod
+    def normalize_receipt_confidence(cls, value):
+        if value is None:
+            return 0.5
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized.endswith("%"):
+                return float(normalized.removesuffix("%")) / 100
+            return {"high": 0.9, "medium": 0.6, "low": 0.3}.get(normalized, value)
+        if isinstance(value, (int, float)) and value >= 2:
+            return value / 100
+        return value
 
 
 class TransactionCreate(BaseModel):
     merchant: str = Field(min_length=1, max_length=120)
     amount: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
-    transaction_date: date
-    category: ExpenseCategory
+    transaction_date: date | None = None
+    category: str = Field(min_length=1, max_length=80)
     transaction_type: Literal["expense"] = "expense"
     currency: str = Field(default="SGD", min_length=3, max_length=3)
     notes: str = Field(default="", max_length=500)
