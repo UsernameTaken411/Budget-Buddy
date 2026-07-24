@@ -19,6 +19,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
+from .models import Category
+
 
 class BudgetCreate(BaseModel):
     category: str = Field(min_length=1, max_length=80)
@@ -72,3 +74,22 @@ class SubscriptionUpdate(BaseModel):
     category: str | None = Field(None, min_length=1, max_length=80)
     reminder_days_before: int | None = Field(None, ge=0, le=30)
     is_active: bool | None = None
+
+
+class ReceiptExtraction(BaseModel):
+    """What Azure AI Foundry hands back from a scanned receipt image.
+
+    `category` is constrained to A's closed enum (SCHEMA.md §2) — not B's
+    original 11-value list (Food/Transport/.../Housing/Utilities/...). The AI
+    prompt in receipt_ai.py already asks for this vocabulary directly, so no
+    separate alias-matching step is needed before the amount can be saved as
+    a real transaction.
+    """
+
+    merchant: str = Field(min_length=1, max_length=120)
+    amount: Decimal = Field(gt=0, max_digits=12, decimal_places=2)
+    date: Date | None = None
+    category: Category = "other"
+    currency: str = Field(default="SGD", min_length=3, max_length=3)
+    confidence: float = Field(default=0.5, ge=0, le=1)
+    notes: str = Field(default="", max_length=500)
