@@ -1,0 +1,49 @@
+name: Trigger auto deployment for bugetbud-api
+
+# When this action will be executed
+on:
+  # Automatically trigger it when detected changes in repo
+  push:
+    branches: 
+      [ all-in-one ]
+    paths:
+    - '**'
+    - '.github/workflows/bugetbud-api-AutoDeployTrigger-66026e3d-d2cf-410c-9809-060eacf44711.yml'
+
+  # Allow manual trigger 
+  workflow_dispatch:      
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions: 
+      id-token: write #This is required for requesting the OIDC JWT Token
+      contents: read #Required when GH token is used to authenticate with private repo
+
+    steps:
+      - name: Checkout to the branch
+        uses: actions/checkout@v2
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.BUGETBUDAPI_AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.BUGETBUDAPI_AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.BUGETBUDAPI_AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push container image to registry
+        uses: azure/container-apps-deploy-action@v2
+        with:
+          appSourcePath: ${{ github.workspace }}backend
+          _dockerfilePathKey_: _dockerfilePath_
+          _targetLabelKey_: _targetLabel_
+          registryUrl: budgetbuddy.azurecr.io
+          registryUsername: ${{ secrets.BUGETBUDAPI_REGISTRY_USERNAME }}
+          registryPassword: ${{ secrets.BUGETBUDAPI_REGISTRY_PASSWORD }}
+          containerAppName: bugetbud-api
+          resourceGroup: rg-tangnanhkyeng70-0738
+          imageToBuild: budgetbuddy.azurecr.io/bugetbud-api:${{ github.sha }}
+          _buildArgumentsKey_: |
+            _buildArgumentsValues_
+
+
