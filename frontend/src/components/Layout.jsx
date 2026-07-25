@@ -33,8 +33,9 @@ const LINKS = [
 // labels get crushed together (all 8 links in one row was unreadable on a
 // real phone). Show the 4 most-used ones plus a "More" tab that opens a
 // sheet with the rest, instead of shrinking everything to fit.
-const MOBILE_PRIMARY = LINKS.slice(0, 4);
-const MOBILE_MORE = LINKS.slice(4);
+const MOBILE_PRIMARY_PATHS = ["/dashboard", "/transactions", "/receipts/scan", "/chat"];
+const MOBILE_PRIMARY = MOBILE_PRIMARY_PATHS.map((p) => LINKS.find((l) => l.to === p));
+const MOBILE_MORE = LINKS.filter((l) => !MOBILE_PRIMARY_PATHS.includes(l.to));
 
 function SyncedBadge() {
   return (
@@ -124,7 +125,7 @@ export default function Layout() {
               to={l.to}
               onClick={() => setMoreOpen(false)}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 rounded-lg py-1 text-center text-[10.5px] font-medium leading-tight ${
+                `flex h-12 flex-col items-center justify-center gap-1 rounded-lg text-center text-[10.5px] font-medium leading-tight ${
                   isActive ? "text-emerald-400" : "text-neutral-500"
                 }`
               }
@@ -136,7 +137,7 @@ export default function Layout() {
           <button
             type="button"
             onClick={() => setMoreOpen((v) => !v)}
-            className={`flex flex-col items-center gap-1 rounded-lg py-1 text-center text-[10.5px] font-medium leading-tight ${
+            className={`flex h-12 w-full flex-col items-center justify-center gap-1 rounded-lg border-0 bg-transparent p-0 text-center text-[10.5px] font-medium leading-tight ${
               moreOpen || MOBILE_MORE.some((l) => location.pathname.startsWith(l.to))
                 ? "text-emerald-400"
                 : "text-neutral-500"
