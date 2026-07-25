@@ -1,32 +1,51 @@
-// /demo — the QR-code / "scan to try our app" landing page. Signs straight
-// into the shared demo account with zero clicks and zero typing, then drops
-// the visitor onto the dashboard. Reuses the exact same signIn() path as a
-// normal login — nothing about auth/RLS is bypassed, this just automates the
-// button click on Login.jsx so a QR scan alone is enough.
-import { useEffect, useState } from "react";
+// /demo — the QR-code / "scan to try our app" landing page. Every scan
+// creates a brand-new, throwaway guest account and signs straight into it —
+// no shared account, no data collisions between simultaneous visitors, no
+// clicks, no typing. Reuses the same signUp() path as the real Signup page,
+// nothing about auth/RLS is bypassed.
+//
+// Requires "Confirm email" to be OFF in Supabase: a made-up guest address
+// can never receive or click a real confirmation link, so with Confirm
+// email on, every scan would get stuck waiting on an email that never comes.
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../services/auth.jsx";
 import { BankIcon } from "../components/icons.jsx";
 
-const DEMO_EMAIL = import.meta.env.VITE_DEMO_EMAIL || "";
-const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD || "";
+function randomGuest() {
+  const id = (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`).replace(
+    /[^a-z0-9]/gi,
+    ""
+  );
+  return {
+    email: `guest-${id}@budgetbuddy.demo`,
+    password: `Guest-${id}-${Date.now()}`,
+  };
+}
 
 export default function Demo() {
-  const { signIn, session, loading } = useAuth();
+  const { signUp, session, loading } = useAuth();
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+  const started = useRef(false);
 
   useEffect(() => {
-    if (loading || session) return;
-    if (!DEMO_EMAIL || !DEMO_PASSWORD) {
-      setError("Demo mode isn't configured yet.");
-      return;
-    }
-    signIn(DEMO_EMAIL, DEMO_PASSWORD)
-      .then(() => navigate("/transactions", { replace: true }))
+    if (loading || session || started.current) return;
+    started.current = true;
+
+    const { email, password } = randomGuest();
+    signUp(email, password, "Guest")
+      .then((result) => {
+        if (!result.session) {
+          setError(
+            "Guest mode needs email confirmation turned off in Supabase for this project."
+          );
+          return;
+        }
+        navigate("/transactions", { replace: true });
+      })
       .catch((err) => setError(err.message || "Could not start the demo."));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, session]);
+  }, [loading, session, signUp, navigate]);
 
   if (!loading && session) return <Navigate to="/transactions" replace />;
 
@@ -51,7 +70,7 @@ export default function Demo() {
             </>
           ) : (
             <>
-              <p className="text-sm font-medium text-neutral-200">Starting your demo…</p>
+              <p className="text-sm font-medium text-neutral-200">Setting up your guest account…</p>
               <p className="mt-1 text-xs text-neutral-500">One moment.</p>
             </>
           )}
