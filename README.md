@@ -1,30 +1,100 @@
-# Person A — Identity & Transactions
+# Budget Buddy
 
-Auth, transactions, CSV import. Owns `profiles` and `transactions`, plus the
-shared auth modules that B and C import.
+An AI-assisted personal finance app. Import a bank statement, get expenses
+categorized automatically, track budgets and savings goals, scan receipts,
+and ask a finance assistant questions about your own spending — all backed
+by a real database with row-level security, not a demo with fake data.
 
-The API contract lives in [`SCHEMA.md`](./SCHEMA.md). Read §1 before touching
-anything — especially the sign convention.
+**Live app:** https://budget-buddy-sepia-psi.vercel.app
+**API:** https://bugetbud-api.victorioussand-34f59fc2.japaneast.azurecontainerapps.io/api/health
 
 ---
 
-## Setup
+## What it does
 
-### 1. Database
+- **CSV import** — upload a bank statement and transactions are parsed,
+  deduplicated, and categorized automatically. Handles both a generic CSV
+  format and DBS/POSB exports, detected server-side.
+- **Transactions** — full CRUD with search, category and date filtering,
+  sorting, and pagination.
+- **Budgets** — set a monthly limit per category and track spend against it.
+- **Savings goals** — target amount, optional target date, contributions,
+  progress tracking.
+- **Subscriptions** — recurring costs with billing cycles and upcoming
+  renewal reminders.
+- **Receipt scanning** — snap or upload a photo of a receipt; an AI vision
+  model extracts merchant, amount, date, and category for confirmation
+  before it's saved.
+- **AI insights chat** — ask questions about your own transactions and
+  budgets in plain language; answers are grounded in numbers computed
+  server-side, not invented by the model.
+- **Auth** — email/password via Supabase Auth, enforced with Postgres
+  row-level security so each user only ever sees their own rows.
 
-Run the DDL from `SCHEMA.md` §1, §3, §4 in the Supabase SQL editor, then the
-RLS policies from §6. Verify:
+## Tech stack
+
+| Layer | Choice |
+|---|---|
+| Frontend | React 18, Vite, Tailwind CSS v4, React Router |
+| Backend | FastAPI (Python), Uvicorn |
+| Database & Auth | Supabase (PostgreSQL + Row-Level Security) |
+| AI | Azure AI Foundry (chat insights + receipt vision extraction) |
+| Frontend hosting | Vercel |
+| Backend hosting | Azure Container Apps, via Azure Container Registry |
+
+## Architecture
+
+```
+React (Vite)  ──HTTPS──▶  FastAPI  ──┬──▶  Supabase (Postgres, RLS, Auth)
+                                      └──▶  Azure AI Foundry (chat + vision)
+```
+
+The frontend never talks to Supabase directly. Every request goes through
+the FastAPI backend, which authenticates the caller's Supabase JWT and then
+queries Postgres using the Supabase **anon** key plus that user's own token
+— never a service-role key — so row-level security is enforced by the
+database itself rather than trusted application code.
+
+## Project structure
+
+```
+backend/
+  app/
+    routers/        # one file per resource: transactions, budgets, savings,
+                     # subscriptions, receipts, insights, profile, auth
+    main.py          # FastAPI app, CORS, router registration
+    supabase_client.py  # per-request Supabase client scoped to the caller
+    azure_client.py     # AI chat insights (Azure AI Foundry)
+    receipt_ai.py       # receipt vision extraction
+    finance.py           # spending/budget calculations
+  tests/
+frontend/
+  src/
+    pages/           # one file per screen (Dashboard, Transactions, Budgets, ...)
+    components/       # shared UI (forms, filters, date picker, icons)
+    services/          # API client, auth, categories
+demo-data/
+  seed.py            # seeds a demo account with realistic transactions
+SCHEMA.md            # database schema and RLS policy reference
+```
+
+## Running locally
+
+### 1. Database (Supabase)
+
+Create a Supabase project, then run the SQL in [`SCHEMA.md`](./SCHEMA.md)
+(schema, then row-level security policies) in the Supabase SQL editor.
+Confirm RLS is on for every table:
 
 ```sql
 select tablename, rowsecurity from pg_tables
-where schemaname='public'
-and tablename in ('profiles','transactions','budgets','savings_goals','subscriptions');
+where schemaname = 'public'
+and tablename in ('profiles', 'transactions', 'budgets', 'savings_goals', 'subscriptions');
 ```
 
-All five must be `true`.
-
-**Turn off email confirmation** — Authentication → Providers → Email →
-uncheck "Confirm email". Otherwise every signup stalls waiting for a click.
+All rows should read `true`. Also turn off **Confirm email** under
+Authentication → Providers → Email for local testing, or every sign-up will
+wait on a confirmation link.
 
 ### 2. Backend
 
@@ -34,187 +104,67 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Create `backend/.env`:
-
-```bash
-SUPABASE_URL=https://YOUR_REF.supabase.co
-SUPABASE_ANON_KEY=your-anon-or-publishable-key
-
-# ONE of these, depending on Settings → API → JWT:
-SUPABASE_JWKS_URL=https://YOUR_REF.supabase.co/auth/v1/.well-known/jwks.json
-# SUPABASE_JWT_SECRET=your-legacy-jwt-secret
-
-CORS_ORIGINS=http://localhost:5173
-```
+Create `backend/.env` from `.env.example` and fill in your Supabase and
+Azure AI Foundry credentials, then:
 
 ```bash
 uvicorn app.main:app --reload --port 8000
 ```
 
-Interactive docs at http://localhost:8000/docs.
-
-> Install from `requirements.txt`, not latest. A FastAPI/Starlette version
-> mismatch causes routes to silently fail to register — the app starts fine and
-> every endpoint 404s.
+Interactive API docs at `http://localhost:8000/docs`.
 
 ### 3. Frontend
 
 ```bash
 cd frontend
 npm install
-cp .env.example .env.local   # then fill in your values
+cp .env.example .env.local   # set VITE_API_BASE_URL
 npm run dev
 ```
 
-http://localhost:5173
+Runs at `http://localhost:5173`.
 
-### 4. Demo data
-
-Each teammate runs this against their **own** account — RLS means your rows are
-invisible to everyone else.
+### 4. Demo data (optional)
 
 ```bash
 pip install httpx
 python demo-data/seed.py you@example.com yourpassword
 ```
 
-237 rows, March–June 2026, all categories. Re-running is safe; duplicates are
-skipped, not doubled.
+Seeds a few months of realistic transactions across all categories against
+your own account. Safe to re-run — duplicates are skipped.
 
----
+## Deployment
 
-## Smoke tests
-
-Run these in order. Don't build further until each passes.
-
-**Auth guard:**
-```bash
-curl -i localhost:8000/api/transactions                          # 401
-curl -i -H "Authorization: Bearer garbage" \
-     localhost:8000/api/transactions                             # 401
-```
-
-**Contract shape** — get a token from the browser console after logging in, or:
-```bash
-curl -s -X POST "$SUPABASE_URL/auth/v1/token?grant_type=password" \
-  -H "apikey: $SUPABASE_ANON_KEY" -H "Content-Type: application/json" \
-  -d '{"email":"you@test.com","password":"pw"}' | jq -r .access_token
-```
-```bash
-curl -s -H "Authorization: Bearer $TOKEN" \
-  "localhost:8000/api/transactions?limit=5" | jq
-```
-Expect `{"items":[],"total":0,"limit":5,"offset":0}` — `items` is an array, never null.
-
-**RLS isolation — the one that matters most.** Create a second user in an
-incognito window. Add a transaction as user 1. Log in as user 2. You must see
-zero rows. If user 1's data appears, either RLS is off or something is using the
-service-role key.
-
-**Sign convention.** Add one expense and one income through the UI:
-```bash
-curl -s -H "Authorization: Bearer $TOKEN" \
-  localhost:8000/api/transactions | jq '.items[].amount'
-```
-Expect one negative, one positive. If both are positive, B's budget math is
-silently wrong.
-
-**Three states.** Empty (new account), loading (throttle to Slow 3G in devtools),
-error (stop uvicorn, reload). All three must render — P0 isn't done otherwise.
-
----
-
-## CSV import
-
-The importer detects format server-side and returns which one it used.
-
-**Generic** — needs a date column and an amount column; description and category
-are optional. Header spellings are matched loosely (`Transaction Date`, `Value
-Date`, `Amount`, `Details`, …). Handles `1,234.56`, `(12.34)` for negatives,
-`SGD` prefixes, trailing `CR`/`DR`, and several date formats.
-
-**DBS/POSB** — detected by the preamble lines. Normalized into the generic shape
-first, so there is only one parser: separate Debit/Credit columns collapse to one
-signed amount, `Transaction Ref1/2/3` join into the description, and amounts
-split across a thousands separator are rejoined.
-
-> That last one is subtle. DBS doesn't quote amount fields, so `4,200.00`
-> arrives as two CSV cells. Unrepaired, a $4,200 salary imports as **$4.00**
-> with every later column shifted — and no error is raised.
-
-Bad rows never abort the import. They come back in `errors[]` with the row
-number as it appears in Excel.
-
-Duplicates are detected on (date, amount, description) within the file's date
-range and skipped.
-
----
-
-## Deploy (Azure Container Apps)
+**Backend** — built as a Docker image, pushed to Azure Container Registry,
+and run on Azure Container Apps:
 
 ```bash
-docker build -t finance-api ./backend
-
-docker build ./frontend -t finance-web \
-  --build-arg VITE_SUPABASE_URL=https://YOUR_REF.supabase.co \
-  --build-arg VITE_SUPABASE_ANON_KEY=your-key \
-  --build-arg VITE_API_BASE_URL=https://YOUR-API.azurecontainerapps.io/api
+docker build -t <registry>.azurecr.io/budget-buddy-api:<tag> ./backend
+docker push <registry>.azurecr.io/budget-buddy-api:<tag>
+az containerapp update --name <app-name> --resource-group <rg> \
+  --image <registry>.azurecr.io/budget-buddy-api:<tag>
 ```
 
-`VITE_*` vars are inlined at build time, so they're build args, not runtime env.
+Required environment variables on the Container App: `SUPABASE_URL`,
+`SUPABASE_ANON_KEY`, `SUPABASE_JWKS_URL`, `CORS_ORIGINS`,
+`AZURE_AI_FOUNDRY_ENDPOINT`, `AZURE_AI_FOUNDRY_API_KEY`,
+`AZURE_AI_FOUNDRY_DEPLOYMENT`.
 
-After deploying the API, add the frontend's public origin to `CORS_ORIGINS` and
-restart it — otherwise the browser blocks every request while curl still works.
+**Frontend** — deployed on Vercel with root directory set to `frontend/`
+and `VITE_API_BASE_URL` pointing at the backend's `/api` path. A
+`vercel.json` rewrite serves `index.html` for every route so client-side
+routing survives a page refresh.
 
-Deploy a hello-world container early, around hour 5. CORS and image config are
-where the time goes, and you want to hit them while you still have patience.
+After deploying, add the frontend's origin to the backend's `CORS_ORIGINS`,
+and add the frontend's origin to Supabase's Auth → URL Configuration (Site
+URL and Redirect URLs) so email confirmation links point at the right
+place.
 
----
+## Roadmap
 
-## For B and C
-
-Import these; don't reimplement them.
-
-| Path | Exports |
-|---|---|
-| `frontend/src/services/supabase.js` | `supabase` |
-| `frontend/src/services/auth.jsx` | `AuthProvider`, `useAuth()` |
-| `frontend/src/services/api.js` | `apiFetch()`, `fetchAllTransactions()` |
-| `frontend/src/services/categories.js` | `CATEGORIES`, `CATEGORY_LABELS`, `spend()`, `totalsByCategory()` |
-| `frontend/src/components/ProtectedRoute.jsx` | `ProtectedRoute` |
-| `backend/app/auth.py` | `get_current_user`, `CurrentUser` |
-| `backend/app/supabase_client.py` | `db_for_user()` |
-
-Frontend:
-```js
-import { apiFetch } from "../services/api";
-const data = await apiFetch("/transactions?start_date=2026-03-01&limit=500");
-```
-
-Backend:
-```python
-@router.get("/budgets")
-def list_budgets(user: CurrentUser = Depends(get_current_user)):
-    return db_for_user(user).table("budgets").select("*").execute().data
-```
-
-Add your routes in `frontend/src/App.jsx`, your nav links in
-`components/Layout.jsx`, your routers in `backend/app/main.py`. Each is a
-one-line addition at a marked comment, so we don't collide.
-
-**Three things that will bite you:**
-
-1. **Expenses are negative.** `spend(t)` and `totalsByCategory()` in
-   `categories.js` handle it — use them rather than `Math.abs()`, which counts
-   income as spending.
-2. **Paginate.** Default `limit` is 50. Aggregating without paging silently
-   drops data. Use `fetchAllTransactions()`.
-3. **Never use the service-role key.** It bypasses every RLS policy.
-
----
-
-## Priority ladder
-
-- **P0** — auth, manual add, generic CSV import, list view with loading/empty/error ✅
-- **P1** — edit, delete, search, filter, sort, pagination, DBS/POSB detection ✅
-- **P2** — profile page ✅
+- End-of-month balance prediction
+- PDF statement import (RAG-based extraction)
+- Voice assistant for the AI chat
+- Investment insights
+- Push notifications for upcoming subscription renewals and budget overruns
