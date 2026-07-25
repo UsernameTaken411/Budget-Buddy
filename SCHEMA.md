@@ -1,16 +1,14 @@
-# SCHEMA.md — Integration Contract
+# SCHEMA.md — Database & API Reference
 
-**Status:** LOCKED as of hour 0:45. Owner of this file: **Person A** (identity & transactions).
+The source of truth for the database schema, row-level security policies,
+and the REST contract between the frontend and backend. If a table or
+endpoint changes, update this file in the same commit as the code change.
 
-Everything below is a contract between the three verticals. If any of it has to change
-after hour 1, the person changing it announces in team chat **before** pushing, and edits
-this file in the same commit as the code change. No silent changes.
-
-| Vertical | Owner | Owns tables | Owns endpoints |
-|---|---|---|---|
-| Identity & Transactions | **A** | `profiles`, `transactions` | `/auth/*`, `/transactions/*`, `/profile` |
-| Budgets & Savings | **B** | `budgets`, `savings_goals`, `subscriptions` | `/budgets/*`, `/savings/*`, `/subscriptions/*` |
-| Dashboard & Insights | **C** | — (read-only consumer) | `/insights/*`, `/chat` |
+| Domain | Tables | Endpoints |
+|---|---|---|
+| Identity & Transactions | `profiles`, `transactions` | `/auth/*`, `/transactions/*`, `/profile` |
+| Budgets & Savings | `budgets`, `savings_goals`, `subscriptions` | `/budgets/*`, `/savings/*`, `/subscriptions/*` |
+| Insights & Receipts | — (reads transactions/budgets) | `/insights/*`, `/receipts/*` |
 
 ---
 
@@ -29,7 +27,7 @@ this file in the same commit as the code change. No silent changes.
 
 ## 1. `transactions` — the foundational table
 
-Both B and C read this. It is the most important object in the app.
+Every other feature (budgets, insights, receipts) reads from this table.
 
 ```sql
 create table transactions (
@@ -69,16 +67,16 @@ create index transactions_user_category_idx on transactions (user_id, category);
 - A refund on a purchase → `+18.90` (it is money coming in)
 - `0.00` is not allowed — reject at the API with 422.
 
-Consequences everyone must handle:
+Consequences to handle everywhere this value is read:
 
-- **B (budgets):** budget "spend" for a category is `sum(-amount) where amount < 0`.
+- **Budget spend** for a category is `sum(-amount) where amount < 0`.
   Do not `abs()` the whole set — that would count income as spending.
-- **C (charts):** a spending-by-category chart must filter `amount < 0` and negate.
+- **Spending-by-category charts** must filter `amount < 0` and negate.
   Net cashflow is a plain `sum(amount)`.
-- **A (import):** the CSV importer is responsible for producing correct signs. A bank file
+- **CSV import** is responsible for producing correct signs. A bank file
   with separate debit/credit columns is normalized to one signed number before insert.
 
-Helper both B and C should use rather than re-deriving:
+Helper to use rather than re-deriving this logic:
 
 ```js
 export const isExpense = (t) => t.amount < 0;
@@ -91,8 +89,8 @@ export const income = (t) => (t.amount > 0 ? t.amount : 0);
 ## 2. Category vocabulary — CLOSED ENUM
 
 Not free text. Enforced by a DB `CHECK` constraint and validated at the API.
-B joins budgets on these strings; C groups charts by them. Adding a value requires
-an announcement, a migration, and an edit to this file.
+Budgets join on these strings; charts group by them. Adding a value requires
+a migration and an edit to this file.
 
 | Stored value | Display label | Typical sign |
 |---|---|---|
@@ -113,8 +111,8 @@ Rules:
 
 - Import maps unknown merchant categories to `other`. It never invents a new value.
 - `transfer` is excluded from spending charts and budget totals by convention —
-  it is money moving between the user's own accounts, not consumption. C and B both
-  filter `category != 'transfer'` for spend views.
+  it is money moving between the user's own accounts, not consumption. Spend
+  views filter `category != 'transfer'`.
 - The canonical list is exported from **`frontend/src/services/categories.js`**
   (`CATEGORIES`, `CATEGORY_LABELS`). Import it; do not retype the array.
 
@@ -122,7 +120,7 @@ Rules:
 
 ## 3. `profiles`
 
-Owned by A. One row per user, created on first login.
+One row per user, created on first login.
 
 ```sql
 create table profiles (
@@ -139,7 +137,7 @@ policy in §6 applies unchanged to all five tables.
 
 ---
 
-## 4. B's tables (published here so C can read them; B owns the DDL)
+## 4. Budgets, savings, and subscriptions
 
 ```sql
 create table budgets (
@@ -186,7 +184,7 @@ Base URL: `/api`. Every endpoint below requires `Authorization: Bearer <supabase
 Missing/invalid token → `401`. Valid token but row belongs to another user → `404` (not 403,
 so we don't leak existence).
 
-### 5.1 `GET /api/transactions` — the endpoint B and C both call
+### 5.1 `GET /api/transactions` — the core read endpoint
 
 Query parameters (all optional):
 
@@ -224,16 +222,16 @@ Response `200`:
 }
 ```
 
-Guarantees B and C can rely on:
+Guarantees callers can rely on:
 
 - `items` is always an array, never null. Empty result → `[]` with `total: 0`.
-- `total` is the count **after filters, before pagination**. C uses it for
-  "showing 50 of 428"; B uses it to know whether to paginate through everything.
+- `total` is the count **after filters, before pagination**, for "showing 50 of 428"
+  style UI and for knowing whether to paginate through everything.
 - Sort is stable: ties on `sort` break on `created_at desc`, then `id`.
 - To pull an entire month for aggregation, call with `start_date`/`end_date` and
   `limit=500`, then page on `offset` until `offset + len(items) >= total`.
 
-### 5.2 Other transaction endpoints (A owns)
+### 5.2 Other transaction endpoints
 
 **`POST /api/transactions`** — body `{ amount, date, category, description }`.
 `user_id` is ignored if sent. Returns `201` with the created object (same shape as an `items` element).
@@ -262,13 +260,12 @@ Guarantees B and C can rely on:
 
 Returns `{ id, display_name, currency, created_at }`. `PATCH` accepts `display_name`, `currency`.
 
-### 5.3a `/api/auth/*` — signup, login, refresh (unauthenticated)
+### 5.4 `/api/auth/*` — signup, login, refresh (unauthenticated)
 
-**Changed 2026-07-24.** The browser no longer talks to Supabase directly.
-It calls these three, we call Supabase's Auth REST API with the anon key,
-and hand back whatever session Supabase issues. `get_current_user` /
-`db_for_user` are unchanged — they still just verify whatever bearer token
-shows up, same as always.
+The browser never talks to Supabase directly. These three endpoints call
+Supabase's Auth REST API with the anon key server-side and hand back
+whatever session Supabase issues. `get_current_user` / `db_for_user`
+simply verify whatever bearer token shows up.
 
 **`POST /api/auth/signup`** — body `{ email, password, display_name? }`. `201`:
 
@@ -292,7 +289,7 @@ Auth failures (bad password, duplicate signup email, etc.) come back as
 `401` with the usual `{ "detail": "…" }` envelope — not Supabase's raw error
 shape.
 
-### 5.4 Error envelope (all endpoints, all three verticals)
+### 5.5 Error envelope (all endpoints)
 
 ```json
 { "detail": "human readable message" }
@@ -305,7 +302,7 @@ shape.
 
 ## 6. RLS — identical policy on all five tables
 
-Run this once per table. Without it, every user sees every user's data and the demo is dead.
+Run this once per table. Without it, every user sees every user's data.
 
 ```sql
 alter table transactions   enable row level security;
@@ -320,31 +317,31 @@ create policy "own rows" on transactions
 ```
 
 The FastAPI backend uses the **anon key plus the caller's JWT**, not the service-role key,
-so RLS is enforced on the backend path too. If anyone reaches for `SUPABASE_SERVICE_ROLE_KEY`
-to "just make it work", stop and ask A first — it silently disables every policy above.
+so RLS is enforced on the backend path too. Never introduce `SUPABASE_SERVICE_ROLE_KEY`
+to "just make it work" — it silently disables every policy above.
 
 ---
 
-## 7. Shared modules — A builds, B and C import
+## 7. Shared modules — do not reimplement these
 
-Do not re-implement any of these. Do not construct `Authorization` headers by hand.
+Do not construct `Authorization` headers by hand; use the modules below.
 
-| Path | Exports | Used by |
+| Path | Exports | Notes |
 |---|---|---|
 | `frontend/src/services/supabase.js` | `supabase` (singleton client) | **not currently used** — kept for future direct-Supabase features; auth/API calls go through the backend instead (see below) |
-| `frontend/src/services/authStorage.js` | `getAccessToken`, `getRefreshToken`, `setTokens`, `clearTokens`, `AUTH_CHANGED_EVENT` | auth.jsx, api.js only — B and C should not touch localStorage directly |
-| `frontend/src/services/auth.jsx` | `AuthProvider`, `useAuth()` | all |
-| `frontend/src/services/api.js` | `apiFetch(path, opts)` | all |
-| `frontend/src/services/categories.js` | `CATEGORIES`, `CATEGORY_LABELS` | all |
-| `frontend/src/components/ProtectedRoute.jsx` | `ProtectedRoute` | all |
-| `backend/app/auth.py` | `get_current_user`, `CurrentUser` | all |
-| `backend/app/supabase_client.py` | `db_for_user(user)` | all |
+| `frontend/src/services/authStorage.js` | `getAccessToken`, `getRefreshToken`, `setTokens`, `clearTokens`, `AUTH_CHANGED_EVENT` | used by auth.jsx and api.js only — don't touch localStorage directly elsewhere |
+| `frontend/src/services/auth.jsx` | `AuthProvider`, `useAuth()` | |
+| `frontend/src/services/api.js` | `apiFetch(path, opts)` | |
+| `frontend/src/services/categories.js` | `CATEGORIES`, `CATEGORY_LABELS` | |
+| `frontend/src/components/ProtectedRoute.jsx` | `ProtectedRoute` | |
+| `backend/app/auth.py` | `get_current_user`, `CurrentUser` | |
+| `backend/app/supabase_client.py` | `db_for_user(user)` | |
 | `backend/app/routers/auth.py` | `router` (mounted at `/api/auth`) | mounted in main.py; not imported directly elsewhere |
 
-`useAuth()` returns `{ session, user, loading, signIn, signUp, signOut }` —
-unchanged shape, but `signIn`/`signUp` now call our backend instead of the
-Supabase SDK. `session.access_token`/`user.{id,email}` are still there, just
-sourced from a decoded JWT in localStorage rather than a live SDK session.
+`useAuth()` returns `{ session, user, loading, signIn, signUp, signOut }`.
+`signIn`/`signUp` call the backend rather than the Supabase SDK directly;
+`session.access_token`/`user.{id,email}` are sourced from a decoded JWT in
+localStorage rather than a live SDK session.
 
 `apiFetch` attaches the bearer token, prefixes `/api`, parses JSON, and throws an
 `ApiError` with `.status` and `.detail` on non-2xx. Usage:
@@ -353,7 +350,7 @@ sourced from a decoded JWT in localStorage rather than a live SDK session.
 const data = await apiFetch("/transactions?start_date=2026-03-01&limit=500");
 ```
 
-Backend usage — this is the entire integration surface for B and C:
+Backend usage:
 
 ```python
 @router.get("/budgets")
@@ -368,19 +365,13 @@ def list_budgets(user: CurrentUser = Depends(get_current_user)):
 `demo-data/transactions_seed.csv` — ~4 months, ~180 rows, every category represented,
 realistic Singapore merchants, plausible salary cadence.
 `demo-data/seed.py` — loads the CSV into the **currently logged-in user's** account via
-`POST /api/transactions/import`.
-
-Each of the three of us runs `seed.py` against our own account. RLS means B's rows are
-invisible to C, so nobody can rely on someone else having seeded. Don't invent your own
-dataset — three different demo datasets on stage looks like three different apps.
+`POST /api/transactions/import`. Safe to re-run against the same account — duplicates
+are detected and skipped, not doubled.
 
 ---
 
 ## 9. Change log
 
-Append a line here for every post-hour-1 change, with the chat announcement timestamp.
-
-| Time | Who | Change | Announced |
-|---|---|---|---|
-| 0:45 | A | Initial lock | ✅ |
-| 2026-07-24 | A | Auth moved behind the backend: new `/api/auth/{signup,login,refresh}` (§5.3a), new `frontend/src/services/authStorage.js`, `supabase.js` no longer used by the auth/API path, `VITE_SUPABASE_*` dropped from `frontend/.env.example`. `useAuth()`'s public shape is unchanged. | ⚠️ **not yet — tell B and C before this gets pushed** |
+| Date | Change |
+|---|---|
+| 2026-07-24 | Auth moved behind the backend: new `/api/auth/{signup,login,refresh}` (§5.4), new `frontend/src/services/authStorage.js`, `supabase.js` no longer used by the auth/API path, `VITE_SUPABASE_*` dropped from `frontend/.env.example`. `useAuth()`'s public shape is unchanged. |

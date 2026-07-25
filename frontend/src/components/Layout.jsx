@@ -1,12 +1,15 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
 import {
   ArchiveIcon,
   BankIcon,
   BriefcaseIcon,
   CameraIcon,
+  CloseIcon,
   CloudIcon,
   GridIcon,
   ListIcon,
+  MoreIcon,
   PiggyBankIcon,
   ReceiptDollarIcon,
   SparkleIcon,
@@ -26,6 +29,13 @@ const LINKS = [
   { to: "/profile", label: "Profile", icon: UserCircleIcon },
 ];
 
+// Mobile bottom nav only has room for a handful of tabs before icons and
+// labels get crushed together (all 8 links in one row was unreadable on a
+// real phone). Show the 4 most-used ones plus a "More" tab that opens a
+// sheet with the rest, instead of shrinking everything to fit.
+const MOBILE_PRIMARY = LINKS.slice(0, 4);
+const MOBILE_MORE = LINKS.slice(4);
+
 function SyncedBadge() {
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1.5 text-xs font-medium text-emerald-400">
@@ -36,6 +46,9 @@ function SyncedBadge() {
 }
 
 export default function Layout() {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const location = useLocation();
+
   return (
     <div className="min-h-screen bg-[#06090a] text-neutral-100 lg:flex">
       {/* Desktop sidebar */}
@@ -103,23 +116,76 @@ export default function Layout() {
           <Outlet />
         </main>
 
-        {/* Mobile bottom nav */}
-        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-8 gap-0.5 border-t border-white/10 bg-[#06090a]/95 px-1 py-2 backdrop-blur lg:hidden">
-          {LINKS.map((l) => (
+        {/* Mobile bottom nav — 4 primary tabs + "More" for the rest */}
+        <nav className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 gap-1 border-t border-white/10 bg-[#06090a]/95 px-1 py-2 backdrop-blur lg:hidden">
+          {MOBILE_PRIMARY.map((l) => (
             <NavLink
               key={l.to}
               to={l.to}
+              onClick={() => setMoreOpen(false)}
               className={({ isActive }) =>
-                `flex flex-col items-center gap-1 rounded-lg py-1 text-center text-[9px] font-medium leading-tight ${
+                `flex flex-col items-center gap-1 rounded-lg py-1 text-center text-[10.5px] font-medium leading-tight ${
                   isActive ? "text-emerald-400" : "text-neutral-500"
                 }`
               }
             >
-              <l.icon className="h-5 w-5" />
+              <l.icon className="h-6 w-6" />
               <span className="truncate">{l.label}</span>
             </NavLink>
           ))}
+          <button
+            type="button"
+            onClick={() => setMoreOpen((v) => !v)}
+            className={`flex flex-col items-center gap-1 rounded-lg py-1 text-center text-[10.5px] font-medium leading-tight ${
+              moreOpen || MOBILE_MORE.some((l) => location.pathname.startsWith(l.to))
+                ? "text-emerald-400"
+                : "text-neutral-500"
+            }`}
+          >
+            <MoreIcon className="h-6 w-6" />
+            <span>More</span>
+          </button>
         </nav>
+
+        {/* "More" sheet — the remaining nav links, opened from the More tab */}
+        {moreOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-20 bg-black/60 lg:hidden"
+              onClick={() => setMoreOpen(false)}
+            />
+            <div className="fixed inset-x-0 bottom-0 z-30 rounded-t-2xl border-t border-white/10 bg-[#0b0f0f] p-4 pb-6 lg:hidden">
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm font-semibold text-white">More</p>
+                <button
+                  type="button"
+                  onClick={() => setMoreOpen(false)}
+                  className="text-neutral-500 hover:text-white"
+                  aria-label="Close"
+                >
+                  <CloseIcon className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="grid grid-cols-4 gap-2">
+                {MOBILE_MORE.map((l) => (
+                  <NavLink
+                    key={l.to}
+                    to={l.to}
+                    onClick={() => setMoreOpen(false)}
+                    className={({ isActive }) =>
+                      `flex flex-col items-center gap-1.5 rounded-xl py-3 text-center text-[11px] font-medium leading-tight ${
+                        isActive ? "bg-emerald-400/10 text-emerald-400" : "text-neutral-300 hover:bg-white/5"
+                      }`
+                    }
+                  >
+                    <l.icon className="h-6 w-6" />
+                    <span className="truncate">{l.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
