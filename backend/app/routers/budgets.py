@@ -8,6 +8,7 @@ CurrentUser/db_for_user pattern as every other router (SCHEMA.md §7).
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from postgrest.exceptions import APIError
 
 from ..auth import CurrentUser, get_current_user
 from ..models_budgets import BudgetCreate, BudgetUpdate
@@ -31,13 +32,26 @@ def list_budgets(user: CurrentUser = Depends(get_current_user)):
 @router.post("", status_code=status.HTTP_201_CREATED)
 def create_budget(payload: BudgetCreate, user: CurrentUser = Depends(get_current_user)):
     row = {**payload.model_dump(mode="json"), "user_id": user.id}  # from the token, never from the body
-    rows = (
-        db_for_user(user)
-        .table("budgets")
-        .insert(row)
-        .execute()
-        .data
-    )
+    try:
+        rows = (
+            db_for_user(user)
+            .table("budgets")
+            .insert(row)
+            .execute()
+            .data
+        )
+    except APIError as exc:
+        # 23505 = unique_violation. budgets has a (user_id, category, period)
+        # unique constraint (SCHEMA.md §4) - one budget per category per
+        # period. Without this, the raw Postgres error text leaked straight
+        # to the UI ("APIError: {'message': 'duplicate key value violates
+        # unique constraint ...'}"). Anything else still bubbles up to
+        # main.py's catch-all handler as before.
+        if exc.code == "23505":
+            raise HTTPException(
+                status_code=409, detail="Duplicate budget category cannot be created."
+            ) from exc
+        raise
     return rows[0]
 
 
