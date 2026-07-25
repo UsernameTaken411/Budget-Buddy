@@ -5,7 +5,6 @@ import { CameraIcon, ScanFrameIcon, ShieldCheckIcon } from "../components/icons.
 import DatePicker from "../components/DatePicker.jsx";
 import Select from "../components/Select.jsx";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const RECEIPT_CATEGORIES = CATEGORIES.filter((c) => c !== "income" && c !== "transfer");
 const RECEIPT_CATEGORY_OPTIONS = RECEIPT_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }));
 
@@ -258,7 +257,7 @@ export default function ReceiptScan() {
               <input
                 ref={inputRef}
                 type="file"
-                accept={ALLOWED_TYPES.join(",")}
+                accept="image/*"
                 onChange={selectImage}
                 className="hidden"
               />
