@@ -3,9 +3,11 @@ import { apiFetch, ApiError } from "../services/api";
 import { CATEGORIES, CATEGORY_LABELS, formatAmount } from "../services/categories";
 import { CameraIcon, ScanFrameIcon, ShieldCheckIcon } from "../components/icons.jsx";
 import DatePicker from "../components/DatePicker.jsx";
+import Select from "../components/Select.jsx";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const RECEIPT_CATEGORIES = CATEGORIES.filter((c) => c !== "income" && c !== "transfer");
+const RECEIPT_CATEGORY_OPTIONS = RECEIPT_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }));
 
 const inputClass =
   "rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-emerald-400/50";
@@ -335,17 +337,12 @@ export default function ReceiptScan() {
 
               <label className="flex flex-col gap-1 text-sm">
                 <span className="font-medium text-neutral-400">Category</span>
-                <select
+                <Select
                   value={result.category}
-                  onChange={(e) => setResult({ ...result, category: e.target.value })}
+                  onChange={(v) => setResult({ ...result, category: v })}
+                  options={RECEIPT_CATEGORY_OPTIONS}
                   className={`${inputClass} bg-[#0b0f0f]`}
-                >
-                  {RECEIPT_CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {CATEGORY_LABELS[c]}
-                    </option>
-                  ))}
-                </select>
+                />
               </label>
 
               <label className="flex flex-col gap-1 text-sm">

@@ -3,8 +3,10 @@ import { apiFetch } from "../services/api";
 import { formatAmount } from "../services/categories";
 import { BellIcon, ExclamationCircleIcon, PlusIcon, TrashIcon } from "../components/icons.jsx";
 import DatePicker from "../components/DatePicker.jsx";
+import Select from "../components/Select.jsx";
 
 const CYCLES = ["weekly", "monthly", "quarterly", "yearly"];
+const CYCLE_OPTIONS = CYCLES.map((c) => ({ value: c, label: c[0].toUpperCase() + c.slice(1) }));
 
 function daysUntil(dateStr) {
   const today = new Date();
@@ -185,17 +187,12 @@ export default function Subscriptions() {
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-400">Billing cycle</label>
-            <select
+            <Select
               value={cycle}
-              onChange={(e) => setCycle(e.target.value)}
+              onChange={setCycle}
+              options={CYCLE_OPTIONS}
               className="rounded-xl border border-white/10 bg-[#0b0f0f] px-3 py-2 text-sm text-white"
-            >
-              {CYCLES.map((c) => (
-                <option key={c} value={c}>
-                  {c[0].toUpperCase() + c.slice(1)}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-400">Next billing date</label>

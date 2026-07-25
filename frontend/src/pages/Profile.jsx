@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../services/api.js";
 import { useAuth } from "../services/auth.jsx";
+import Select from "../components/Select.jsx";
+
+const CURRENCY_OPTIONS = ["SGD", "USD", "MYR", "EUR", "GBP", "AUD"].map((c) => ({ value: c, label: c }));
 
 export default function Profile() {
   const { user, signOut } = useAuth();
@@ -119,18 +122,12 @@ export default function Profile() {
           >
             Currency
           </label>
-          <select
-            id="currency"
+          <Select
             value={currency}
-            onChange={(e) => setCurrency(e.target.value)}
+            onChange={setCurrency}
+            options={CURRENCY_OPTIONS}
             className="w-full rounded-xl border border-white/10 bg-[#0b0f0f] px-3 py-2.5 text-sm text-white outline-none focus:border-emerald-400/50"
-          >
-            {["SGD", "USD", "MYR", "EUR", "GBP", "AUD"].map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div className="flex items-center gap-3">

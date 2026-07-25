@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { apiFetch } from "../services/api";
 import { CATEGORIES, CATEGORY_LABELS, formatAmount } from "../services/categories";
 import { ExclamationCircleIcon, PlusIcon, TrashIcon } from "../components/icons.jsx";
+import Select from "../components/Select.jsx";
 
 const BUDGET_CATEGORIES = CATEGORIES.filter((c) => c !== "income" && c !== "transfer");
+const BUDGET_CATEGORY_OPTIONS = BUDGET_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }));
 
 export default function Budgets() {
   const [budgets, setBudgets] = useState(null);
@@ -114,17 +116,12 @@ export default function Budgets() {
         >
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-400">Category</label>
-            <select
+            <Select
               value={category}
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={setCategory}
+              options={BUDGET_CATEGORY_OPTIONS}
               className="rounded-xl border border-white/10 bg-[#0b0f0f] px-3 py-2 text-sm text-white"
-            >
-              {BUDGET_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_LABELS[c]}
-                </option>
-              ))}
-            </select>
+            />
           </div>
           <div className="flex flex-col gap-1">
             <label className="text-xs font-medium text-neutral-400">Monthly limit</label>

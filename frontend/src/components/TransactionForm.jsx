@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { CATEGORIES, CATEGORY_LABELS } from "../services/categories.js";
 import DatePicker from "./DatePicker.jsx";
+import Select from "./Select.jsx";
 
 // The UI takes a POSITIVE magnitude plus an expense/income toggle, and converts
 // to the signed value the API expects (SCHEMA.md §1). Users think in
 // "I spent $12.50", not "-12.50" — but the database must store the sign.
 
 const today = () => new Date().toISOString().slice(0, 10);
+
+const CATEGORY_OPTIONS = CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }));
 
 const inputClass =
   "w-full rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-white placeholder:text-neutral-600 outline-none focus:border-emerald-400/50";
@@ -123,17 +126,12 @@ export default function TransactionForm({ initial, onSubmit, onCancel, busy }) {
           <label className="mb-1 block text-xs font-medium text-neutral-400">
             Category
           </label>
-          <select
+          <Select
             value={category}
-            onChange={(e) => setCategory(e.target.value)}
+            onChange={setCategory}
+            options={CATEGORY_OPTIONS}
             className={`${inputClass} bg-[#0b0f0f]`}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {CATEGORY_LABELS[c]}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div>

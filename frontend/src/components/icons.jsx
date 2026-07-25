@@ -287,3 +287,19 @@ export function CloseIcon({ className = base }) {
     </svg>
   );
 }
+
+export function ChevronDownIcon({ className = base }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M5 9l7 7 7-7" />
+    </svg>
+  );
+}
+
+export function CheckIcon({ className = base }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M5 12.5l4.5 4.5L19 7" />
+    </svg>
+  );
+}
