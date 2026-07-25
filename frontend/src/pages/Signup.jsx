@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "../services/auth.jsx";
 import { BankIcon } from "../components/icons.jsx";
+import { randomGuest } from "../services/guestAccount.js";
 
 export default function Signup() {
   const { signUp, session, loading } = useAuth();
@@ -13,8 +14,27 @@ export default function Signup() {
   const [error, setError] = useState(null);
   const [needsConfirm, setNeedsConfirm] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   if (!loading && session) return <Navigate to="/transactions" replace />;
+
+  async function handleGuest() {
+    setError(null);
+    setDemoLoading(true);
+    try {
+      const { email: guestEmail, password: guestPassword } = randomGuest();
+      const result = await signUp(guestEmail, guestPassword, "Guest");
+      if (!result.session) {
+        setError("Guest mode isn't available right now. Please sign up with an email instead.");
+        return;
+      }
+      navigate("/transactions", { replace: true });
+    } catch (err) {
+      setError(err.message || "Could not start as a guest.");
+    } finally {
+      setDemoLoading(false);
+    }
+  }
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -85,9 +105,24 @@ export default function Signup() {
           <h1 className="mb-1 text-2xl font-bold tracking-tight text-white">
             Create account
           </h1>
-          <p className="mb-6 text-sm text-neutral-400">
-            Start tracking where your money goes.
+          <p className="mb-5 text-sm text-neutral-400">
+            Or skip this — jump straight in, no email, no signup.
           </p>
+
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={demoLoading}
+            className="w-full rounded-xl bg-emerald-400 px-4 py-3.5 text-base font-bold text-neutral-950 shadow-[0_0_0_3px_rgba(52,211,153,0.15)] transition hover:bg-emerald-300 disabled:opacity-50"
+          >
+            {demoLoading ? "Setting up your guest account…" : "Continue as a guest →"}
+          </button>
+
+          <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-neutral-600">
+            <span className="h-px flex-1 bg-white/10" />
+            or create an account
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -155,7 +190,7 @@ export default function Signup() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-neutral-950 transition hover:bg-emerald-300 disabled:opacity-50"
+              className="w-full rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:bg-white/5 disabled:opacity-50"
             >
               {submitting ? "Creating…" : "Create account"}
             </button>
