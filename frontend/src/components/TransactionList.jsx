@@ -124,7 +124,7 @@ export default function TransactionList({
                 {formatAmount(t.amount)}
               </span>
 
-              <div className="flex shrink-0 gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+              <div className="flex shrink-0 gap-1 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100 sm:focus-within:opacity-100">
                 <button
                   onClick={() => onEdit(t)}
                   className="rounded px-2 py-1 text-xs font-medium text-neutral-400 hover:bg-white/10 hover:text-neutral-200"
