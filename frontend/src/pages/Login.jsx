@@ -71,11 +71,35 @@ export default function Login() {
 
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-6">
           <h1 className="mb-1 text-2xl font-bold tracking-tight text-white">
-            Sign in
+            Welcome to Budget Buddy
           </h1>
-          <p className="mb-6 text-sm text-neutral-400">
-            Welcome back. Enter your details to continue.
+          <p className="mb-5 text-sm text-neutral-400">
+            No account? Jump straight in — no email, no signup.
           </p>
+
+          <button
+            type="button"
+            onClick={handleGuest}
+            disabled={demoLoading}
+            className="w-full rounded-xl bg-emerald-400 px-4 py-3.5 text-base font-bold text-neutral-950 shadow-[0_0_0_3px_rgba(52,211,153,0.15)] transition hover:bg-emerald-300 disabled:opacity-50"
+          >
+            {demoLoading ? "Setting up your guest account…" : "Continue as a guest →"}
+          </button>
+
+          {error && (
+            <div
+              role="alert"
+              className="mt-4 rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-300"
+            >
+              {error}
+            </div>
+          )}
+
+          <div className="my-6 flex items-center gap-3 text-xs font-medium uppercase tracking-wide text-neutral-600">
+            <span className="h-px flex-1 bg-white/10" />
+            or sign in
+            <span className="h-px flex-1 bg-white/10" />
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -114,37 +138,14 @@ export default function Login() {
               />
             </div>
 
-            {error && (
-              <div
-                role="alert"
-                className="rounded-xl border border-rose-500/20 bg-rose-500/10 px-3 py-2 text-sm text-rose-300"
-              >
-                {error}
-              </div>
-            )}
-
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-semibold text-neutral-950 transition hover:bg-emerald-300 disabled:opacity-50"
+              className="w-full rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-neutral-200 transition hover:bg-white/5 disabled:opacity-50"
             >
               {submitting ? "Signing in…" : "Sign in"}
             </button>
           </form>
-
-          <div className="my-5 flex items-center gap-3 text-xs text-neutral-600">
-            <span className="h-px flex-1 bg-white/10" />
-            or
-            <span className="h-px flex-1 bg-white/10" />
-          </div>
-          <button
-            type="button"
-            onClick={handleGuest}
-            disabled={demoLoading}
-            className="w-full rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-neutral-200 transition hover:bg-white/5 disabled:opacity-50"
-          >
-            {demoLoading ? "Setting up your guest account…" : "Continue as a guest"}
-          </button>
         </div>
 
         <p className="mt-6 text-center text-sm text-neutral-500">
