@@ -259,7 +259,6 @@ export default function ReceiptScan() {
                 ref={inputRef}
                 type="file"
                 accept={ALLOWED_TYPES.join(",")}
-                capture="environment"
                 onChange={selectImage}
                 className="hidden"
               />
