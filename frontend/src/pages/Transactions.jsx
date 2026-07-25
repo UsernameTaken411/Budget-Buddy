@@ -5,7 +5,7 @@ import CsvImport from "../components/CsvImport.jsx";
 import TransactionFilters from "../components/TransactionFilters.jsx";
 import TransactionForm from "../components/TransactionForm.jsx";
 import TransactionList from "../components/TransactionList.jsx";
-import { DownloadIcon, PlusIcon, UploadIcon } from "../components/icons.jsx";
+import { DownloadIcon, PlusIcon } from "../components/icons.jsx";
 
 const PAGE_SIZE = 25;
 
@@ -144,13 +144,6 @@ export default function Transactions() {
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap gap-2">
-          <button
-            onClick={() => document.getElementById("csv-file-input")?.click()}
-            className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
-          >
-            <UploadIcon className="h-4 w-4" />
-            Import CSV
-          </button>
           <button
             onClick={handleExport}
             className="inline-flex items-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm font-medium text-neutral-300 hover:bg-white/5"
